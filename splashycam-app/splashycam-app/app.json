@@ -19,13 +19,28 @@
     },
     "android": {
       "package": "txt.teddy.splashycam",
-      "permissions": ["CAMERA", "RECORD_AUDIO", "ACCESS_COARSE_LOCATION"]
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "plugins": [
       "expo-router",
-      ["expo-camera", { "cameraPermission": "Splashy Cam records your eliminations." }],
-      ["expo-location", { "locationAlwaysAndWhenInUsePermission": "Splashy Cam stamps the city on your clip." }],
-      "expo-media-library"
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Splashy Cam records your eliminations."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Splashy Cam stamps the city on your clip."
+        }
+      ],
+      "expo-media-library",
+      "expo-asset"
     ]
   }
 }
