@@ -317,7 +317,7 @@ function RegistrationRow({ reg, onRetry }: { reg: Step<SaveResult>; onRetry: () 
         action={retry} />;
     case "unconfigured":
       return <StatusRow icon="close-circle-outline" title="Not connected to a server"
-        detail="This build has no Supabase settings, so codes can't be registered or verified." />;
+        detail="This build has no Supabase settings, so codes can't be registered or looked up." />;
     case "duplicate":
       return <StatusRow icon="close-circle-outline" title="Code clash"
         detail="Another clip already has this code. Film it again to get a new one." />;
