@@ -1,6 +1,7 @@
-# stamp-video: burn the stamp into the video
+# stamp-video: trim + burn the stamp into the video
 
-A local Expo module that writes the camcorder stamp into the video pixels on the
+A local Expo module that trims the clip to the part picked on the trim screen (up to
+60 s) **and** writes the camcorder stamp into the video pixels, in one export on the
 phone. The stamp includes the code, a clock that counts up each second, and the
 city. The input clip is left alone, and a new `.mp4` is written to the app's cache.
 Nothing is uploaded.
@@ -46,9 +47,13 @@ upload it.
 3. **The clock ticks.** It should count up once per second from the time filming
    started, in the same format as the on-screen stamp.
 4. **Audio is still there.**
-5. **Time taken for a 60-second clip.** If it's slow, the share screen shows
+5. **Trim:** record about 2 minutes and keep 0:40–1:20. The saved file must be 40 s
+   long, and the stamp's clock must read the real time of that part: the recording
+   start plus 40 s, not the recording start. The clock-offset lines are marked
+   `CHECK ON DEVICE` on both platforms.
+6. **Time taken for a 60-second clip.** If it's slow, the share screen shows
    "Stamping the video…" the whole time. Decide whether that's acceptable.
-6. **Failure path.** Temporarily make `burnStamp` throw. The app should say
+7. **Failure path.** Temporarily make `burnStamp` throw. The app should say
    "Couldn't stamp the video" and still send the original clip with the proof card.
 
 ## Known risks

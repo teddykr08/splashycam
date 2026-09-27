@@ -4,8 +4,7 @@ About 15 minutes. Do the steps in order; later steps use the clip from earlier o
 Each step says what to tap and what you should see. **If something's different,
 note the step number.**
 
-**This version has no backend.** Codes are made on the phone and stay on the
-phone. There's nothing to register and no "Check a code" screen.
+**This version has no backend.** Codes are made on the phone and stay on the phone.
 
 ---
 
@@ -13,128 +12,119 @@ phone. There's nothing to register and no "Check a code" screen.
 
 | | Why |
 |---|---|
-| **The stamp isn't in the saved video** | The burn-in module is native code, and Expo Go can't load it. The proof card carries the stamp. |
-| **Front + back at the same time** | Also a native-build feature (`modules/dual-camera`). In Expo Go you can flip between front and back, but not record both. |
-| **Permission prompts say "Expo Go"** | Expo Go shows its own wording. The Splashy Cam wording appears in a real build. |
+| **The front camera doesn't record** | Recording both cameras needs native code (`modules/dual-camera`). Expo Go shows a dashed **FRONT CAM** box where the front camera will be, and records the back camera only. |
+| **Trimming doesn't cut the file** | Nothing in Expo Go can cut video. You still pick the part to keep, and the preview and proof card use it, but the whole recording is saved and sent. The share screen says so. |
+| **The stamp isn't in the saved video** | Same reason: native code. The proof card carries the stamp. |
+| **Permission prompts say "Expo Go"** | Expo Go shows its own wording. |
 | **iOS Settings: look under Expo Go** | Permissions belong to Expo Go while testing. |
-| **A floating Expo Go button or menu** | That's Expo Go's developer menu, not ours. It isn't in a real build. |
-| **No vibration while filming** | iOS turns the Taptic Engine off while the camera runs. The shake warning is on-screen. |
+| **A floating Expo Go button or menu** | That's Expo Go's developer menu, not ours. |
 
 ---
 
 ## 0. Start it (on your computer)
 
-1. From `splashycam-app/splashycam-app`, run `npm install`, then `npx expo start`.
-   No `.env` is needed.
-2. Put the iPhone on the same Wi-Fi as the computer.
-3. Scan the QR code with the iPhone Camera app. It opens in Expo Go.
+From `splashycam-app/splashycam-app`, run:
 
-If it won't connect, run `npx expo start --tunnel` instead. If it says "Project is
-incompatible", update Expo Go.
+```bash
+npm install
+npx expo start --clear
+```
+
+Scan the QR code with the iPhone Camera app. If it won't connect, use
+`npx expo start --tunnel --clear` instead.
 
 ## 1. Home
 
-**See:**
-- the small blue "SENIOR ASSASSIN · TIMESTAMPED PROOF" line;
-- the **Splashy Cam** title with a blue water drop in front;
-- a sample stamp;
-- one big **Record an elimination** button;
-- at the bottom: "Clips and codes stay on your phone. Nothing is uploaded."
+**See:** the **Splashy Cam** title with a blue drop, a sample stamp, and one big
+**Record an elimination** button.
 
 ## 2. Permissions (first run only)
 
-1. Tap **Record an elimination**, then **Allow camera and mic**. Allow both iOS
-   prompts.
-2. The camera opens. Then the location prompt appears. Choose **Allow While Using
-   App**.
+1. Tap **Record an elimination**, then **Allow camera and mic**. Allow both prompts.
+2. Then allow location: **Allow While Using App**.
 
-## 3. The camera screen, before filming
+## 3. The camera screen
 
 **See:**
-- **Top left:** ✕ (close).
-- **Top centre:** a dark pill with a blue drop and **SPLASHY CAM**.
-- **Top right: nothing.** No "60s" any more. If there's a control there, it's
-  Expo Go's; tell me what it looks like.
-- **Bottom left:** the stamp. It shows `SPLASHY CAM`, a code like `HX7-42K`, a
-  clock ticking every second, and `LOCATING…`, which turns into your city.
-- **Bottom:** the big shutter in the middle and a **flip** button on the right.
+- **Top left:** ✕.
+- **Top centre:** the **SPLASHY CAM** pill.
+- **Top right, just below the pill:** a dashed box reading **FRONT CAM** and "Needs
+  the full app". That's where the front camera goes in the full build.
+- **Bottom left:** the stamp. It has a code, a ticking clock, and `LOCATING…`, which
+  becomes your city. The code must not move or change.
+- **Bottom:** the shutter, with **no flip button** and **no timer or "60s" anywhere**.
 
-**Check that the code is locked:**
-- Watch the code for 10 seconds. It must not move or change.
-- It must also stay put while `LOCATING…` becomes your city.
+## 4. Record past a minute
 
-If you denied location, the stamp says `NO CITY` and the line under the shutter
-mentions it. The stamp still shouldn't move.
+1. Tap the shutter.
+   **See:**
+   - the code stays the same;
+   - a red pulsing dot with `REC 00:01` counting up;
+   - the FRONT CAM box says "Not recording".
+2. Let it run for **about 1:30**, then tap again. **It must not stop by itself at 60
+   seconds.**
+3. **See:** the trim screen.
 
-## 4. Flip
+## 5. Trim
 
-1. Tap the flip button.
-   **See:** the front camera. The stamp and code stay exactly where they were.
-2. Tap it again.
-   **See:** back to the rear camera.
+**See:**
+- the clip playing silently, looping only the selected part;
+- "PICK THE PART TO KEEP", with a big time `1:00` and "0:30 – 1:30 of 1:30". **The
+  default is the last 60 seconds.**
+- a strip of frames with a blue frame around the selected part, with handles at each
+  end, and the rest dimmed;
+- a note that Expo Go keeps the whole recording;
+- **Undo** (greyed out) and **Use this part**.
 
-## 5. Film a clip
+**Try:**
+1. **Drag the left handle right.**
+   **See:** the time shrink, and the preview loop only the new part.
+2. **Drag the middle of the selection.**
+   **See:** the whole selection slides, keeping its length.
+3. **Drag the left handle all the way left.**
+   **See:**
+   - the frame turns **white**;
+   - the time shows about 1:30;
+   - a line saying how much too long it is;
+   - the button reads **Too long** and does nothing.
+4. **Tap Undo** until it's back under a minute.
+   **See:** each tap steps back one drag, and the button returns to **Use this part**.
+5. **Tap Use this part.**
 
-1. Note the code on the stamp, then tap the shutter.
-2. **See:**
-   - **the code does not change;**
-   - a red dot pulsing next to `REC 00:01`, where the SPLASHY CAM pill was;
-   - the ✕ and the flip button disappear;
-   - the shutter turns blue with a white square.
-3. **Countdown:** let it run past 50 seconds.
-   **See:** `10s`, `9s`, … appear top-right. At 60 seconds recording stops by
-   itself. (For a quicker test, just stop at any time with the shutter.)
-4. **See:** the share screen, with the clip playing silently on a loop.
+**Also try:** record a clip of **10 seconds** or less.
+**See:** the whole clip selected, with the button ready straight away.
 
-## 6. Shake warning
-
-1. Tap ✕ to go home, then start another recording.
-2. Hold still: no warning.
-3. Shake the phone hard, or rap on the mount.
-   **See:** **TIGHTEN THE DIAL** within about half a second.
-4. Hold still again.
-   **See:** the banner clears within 1–2 seconds.
-5. Stop recording.
-   **See:** the share screen notes the mount was rattling.
-
-**Tell me** if normal handheld wobble sets it off, or if a loose mount doesn't.
-
-## 7. Share screen
+## 6. Share screen
 
 **See, top to bottom:**
-- a header with ✕ on the left and the **SPLASHY CAM** wordmark in the middle;
-- the clip playing;
-- **PROOF CODE**, the same code as on the stamp, with **Copy**;
-- "Saving to camera roll…", then a Photos prompt (allow it), then **Saved to
-  camera roll**;
-- the proof card: the frame, the stamp, "SPLASHY CAM · TIMESTAMPED PROOF", the big
-  code, FILMED and NEAR, and "Filmed with Splashy Cam";
-- four frames to choose from;
-- at the bottom, **exactly two buttons: Send clip** and **Share proof card**.
+- a header with ✕ and the wordmark;
+- the clip, looping only the part you picked;
+- **PROOF CODE**, with **Copy**;
+- **Kept: 0:xx – 0:yy**, with a note that this test build saves and sends the whole
+  recording;
+- **Saved to camera roll**, after a Photos prompt;
+- the proof card. Its frames come from the part you picked, and FILMED shows the
+  time of the frame shown;
+- **two buttons: Send clip** and **Share proof card**.
 
 **Then:**
 1. Tap **Send clip**.
-   **See:** the share sheet with the video (Messages, TikTok, Save Video, …).
+   **See:** the share sheet with the video.
 2. Tap **Share proof card**.
-   **See:** the share sheet with the image. **Save Image** and every sending option
-   are in there.
+   **See:** the share sheet with the image, including Save Image.
 3. Tap **✕**.
    **See:** home.
 
-## 8. Permission switched off
+## 7. Permission switched off
 
 1. In iOS Settings, go to **Expo Go** and turn **Camera** off.
-2. Back in the app, tap **Record an elimination**.
-   **See:** **Camera is switched off**, with an **Open Settings** button that goes
-   to Expo Go's page.
+2. Tap **Record an elimination**.
+   **See:** **Camera is switched off**, with **Open Settings**.
 3. Turn Camera back on.
 
 ---
 
 ## Reporting back
 
-For anything that didn't match, send:
-
-- the step number;
-- what you saw, with a screenshot if you can;
-- any red error box. Red boxes are crashes; those matter most.
+For anything that didn't match, send the step number, what you saw (a screenshot if
+you can), and any red error box. Red boxes are crashes; those matter most.

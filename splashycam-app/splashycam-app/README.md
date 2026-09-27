@@ -30,9 +30,14 @@ Describe it this way in anything you publish.
 ## What it does today
 
 - **Record** — full-screen camera with a camcorder stamp on the preview: code, a
-  live ticking time, and city. A pulsing red REC light shows while filming, a
-  countdown appears in the last 10 seconds of the 60-second limit, and a
-  "TIGHTEN THE DIAL" warning appears if the mount rattles. Front/back flip.
+  live ticking time, and city. A pulsing red REC light shows while filming. No
+  length limit.
+- **Dual camera** (full build only) — back camera fills the frame, front camera
+  inset top-right, recorded as one video. In Expo Go a dashed FRONT CAM box shows
+  where it will go and says it needs the full app.
+- **Trim** — after stopping, pick the part to keep: up to 60 s, defaulting to the
+  last 60 s. Drag handles on a timeline, with undo. The cut itself happens in the
+  full build; Expo Go keeps the whole recording and says so.
 - **Proof card** — after filming, pick a frame and get a PNG with the stamp drawn
   on it. In Expo Go this is how the stamp reaches the host.
 - **Send** — the clip goes to the camera roll. Two buttons: **Send clip** and
@@ -65,7 +70,7 @@ npm install
 npx expo start                # scan the QR with your iPhone camera; opens in Expo Go
 
 npm run typecheck             # strict TypeScript, app + tests
-npm test                      # code-entry and shake-detection tests
+npm test                      # code-format and trim-selection tests
 ```
 
 ### Server: later
@@ -96,17 +101,18 @@ Android first if you want to move before paying Apple.
 ```
 app/_layout.tsx      navigation
 app/index.tsx        home
-app/record.tsx       camera, live stamp, REC light, countdown, flip, shake warning
+app/record.tsx       camera, live stamp, REC light, dual camera (or its Expo Go preview)
+app/trim.tsx         pick the part to keep (max 60 s), undo
 app/clip.tsx         after filming: play, stamp (native builds), save, proof card, send
 components/          button, wordmark, stamp, proof card, state notes
 lib/theme.ts         colors, type, spacing, touch sizes
 lib/code.ts          code format helpers (pure, tested)
 lib/stamp.ts         code generation (on the phone)
-lib/shake.ts         shake detection (pure, tested); useShake.ts wires the sensor
+lib/trim.ts          trim selection logic (pure, tested); useLoopRange.ts loops a player
 lib/proof.ts         frame grabs + proof card rendering
 lib/env.ts           Expo Go detection
-modules/stamp-video  native burn-in (untested; see its README)
-modules/dual-camera  front + back at once: capability check only (see its README)
+modules/stamp-video  native trim + stamp burn-in (untested; see its README)
+modules/dual-camera  back + front recorded as one video (untested; see its README)
 later/               server code kept for later, not used by the app
 supabase/schema.sql  later: one table, two functions
 eas.json             EAS build profiles (preview = internal install, production = stores)
@@ -116,7 +122,7 @@ tests/               node:test unit tests
 ## Not built yet
 
 - A tested burn-in: the code is written but unproven (see above)
-- Front + back camera at once: designed and prepped in `modules/dual-camera`, not written
+- A tested dual camera and trim cut: both written, neither compiled yet
 - A server to register and check codes (kept in `later/`)
 - Host dashboard for reviewing a game's clips
 - Affiliate codes / shop

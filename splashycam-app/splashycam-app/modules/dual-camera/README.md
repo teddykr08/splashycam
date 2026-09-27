@@ -1,40 +1,53 @@
-# dual-camera: front + back at the same time
+# dual-camera: back + front at the same time
 
-**The goal:** record both cameras at once, so the clip shows the hit (back camera)
-and the shooter (front camera) in picture-in-picture.
+Records **one video**: the back camera fills the frame, with the front camera inset
+in the top-right (the BeReal / TikTok dual layout). The inset is 30% of the frame
+width, at 16:9.
 
-## Status: prep only
+## Status: written, not proven
 
 | | |
 |---|---|
-| Written | JS interface (`index.ts`). Native `isSupported()` on iOS (`AVCaptureMultiCamSession.isMultiCamSupported`) and Android (`CameraManager.getConcurrentCameraIds()`, API 30+). |
-| **Not written** | The recording itself. That needs its own native camera view, designed below. |
-| **Not checked** | Nothing here has been compiled. Like `stamp-video`, it only loads in an EAS build, never in Expo Go. The app doesn't call it yet. |
+| Written | **iOS** (`ios/DualCameraModule.swift`): `AVCaptureMultiCamSession`, two preview layers on explicit connections, and back frames composited with the latest front frame via Core Image, written with `AVAssetWriter` plus mic audio. This is the approach of Apple's *AVMultiCamPiP* sample. **Android** (`android/.../DualCameraModule.kt`): CameraX concurrent camera in composition mode. Both cameras bind the same `Preview` + `VideoCapture`, and `CompositionSettings` places the front camera. **JS** (`index.ts`): `isAvailable`, `isSupported()`, and `DualCameraView`, whose `startRecording()` / `stopRecording()` are called through a ref, the same pattern as `expo-camera`. |
+| Checked | Expo autolinking resolves the module on both platforms, and `expo prebuild` succeeds with it. The CameraX classes used (`ConcurrentCamera.SingleCameraConfig`, `CompositionSettings`, `bindToLifecycle(List<SingleCameraConfig>)`) were read from the androidx source on its main branch, **not the 1.6.0 tag**. |
+| **Not checked** | **Never compiled or run.** There was no Xcode or Android SDK in the environment where it was written. Expect compile errors first, then tuning on a device. `CHECK ON DEVICE` in the source marks the likeliest problems. |
 
-## Why this can't be done in Expo Go
+## How the app uses it
 
-`expo-camera` runs one camera at a time. Recording two means a capture session that
-owns both cameras. That's native code, and Expo Go can't load native code.
+`app/record.tsx` renders `DualCameraView` only when the module is in the build **and**
+`isSupported()` is true. Otherwise it records the back camera with `expo-camera` and
+shows a dashed **FRONT CAM** box in the inset's position. The box says why it's empty
+("Needs the full app" in Expo Go, "This phone can't run both cameras" on older
+phones) and "Not recording" while filming. It never pretends to be a camera.
 
-## Design for the recording
+The dual video then goes through the same trim → stamp → share flow as a normal clip.
 
-- **iOS:** an `AVCaptureMultiCamSession` with both cameras as inputs. Frames from
-  both are composited into one picture-in-picture frame and written with
-  `AVAssetWriter`. Apple's *AVMultiCamPiP* sample does exactly this and is the
-  starting point.
-- **Android:** CameraX's concurrent camera API (1.3+). Pass both cameras to one
-  `bindToLifecycle` call as a list of `SingleCameraConfig`s. Newer CameraX adds a
-  composition mode that records picture-in-picture directly.
-- **In the app:** exposed as a native view, `DualCameraView`, with the same
-  record/stop API the recorder uses today. `record.tsx` would render it instead of
-  `CameraView` when `isSupported()` is true and the user turns dual mode on. The
-  stamp and burn-in stay the same.
+## Versions: must match Expo's
 
-## Known limits to plan around
+- **Android:** CameraX is pinned to **1.6.0**, the version `expo-camera` uses. Check
+  `node_modules/expo-camera/android/build.gradle` (`camerax_version`) after every
+  Expo SDK upgrade.
+- **iOS:** needs iOS 16.4+ (Expo's minimum) and an A12 chip or newer (iPhone XS and
+  later).
 
-- **iOS hardware:** A12 chip or later, and Apple limits resolution and frame rate
-  when two cameras run at once. Budget for 1080p or lower.
-- **Android hardware:** support varies by phone. Many mid-range phones report no
-  concurrent camera pairs, so the single-camera path must stay the default.
-- **Size of the job:** this is the largest native piece in the app. Build and test
-  `stamp-video` first.
+## What to test on a device, in order
+
+1. **It builds.**
+2. **Preview:** back camera fills the screen, front camera sits top-right below the
+   top bar, and the front view is mirrored.
+3. **Record 10 s, then play the file:** one video with the front camera inset
+   top-right, and audio present.
+4. **Hardware cost (iOS):** if the view reports "too much for this iPhone", lower the
+   camera formats. See `hardwareCost` in the source.
+5. **Orientation:** portrait recording is upright in the saved file on both platforms.
+6. **Unsupported phone:** the app falls back to back camera only, with the FRONT CAM
+   box.
+
+## Known limits
+
+- **Resolution:** Apple caps resolution and frame rate when two cameras run at once.
+  1080p is the target.
+- **Android support varies:** many mid-range phones report no front + back
+  concurrent pair. Those get the single-camera fallback.
+- **Inset corners:** rounded on screen, square in the iOS recording. Rounding them in
+  the recording is a Core Image mask to add later.

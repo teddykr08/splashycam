@@ -426,3 +426,27 @@ launch, not in this environment.
   `modules/dual-camera`: a capability check plus a design, no recording code.
 - **Identity:** a drop-mark wordmark on home, the camera, the share header and the
   proof card.
+
+---
+
+## 11. Dual camera, trim, shake removed
+
+- **The shake warning is removed completely:** sensor code, UI, tests, and the
+  `expo-sensors` dependency. It couldn't tell a loose mount from a swung gun.
+- **Trim needs the native build.** I checked every video package available in Expo
+  Go (SDK 57): `expo-video` (playback and thumbnails), `expo-video-thumbnails`,
+  `expo-media-library`, `expo-camera`, `expo-file-system`. None can trim or export.
+  `expo-image-picker`'s "editing" is image cropping only, and `videoMaxDuration` only
+  caps a new recording. So the trim screen is built in full in JS: last-60-s
+  default, handles, slide, undo, and "Too long" blocking. The selection logic is
+  pure, with 9 tests. The cut happens in `stamp-video`, in the same export as the
+  stamp: iOS `AVAssetExportSession.timeRange`, Android Media3 1.9.0
+  `ClippingConfiguration` (verified in the 1.9.0 source). In Expo Go the whole
+  recording is saved and sent, and the share screen says so.
+- **No recording limit.** `maxDuration` is gone, along with the countdown.
+- **Dual camera** replaces the flip button. The native view is written for iOS
+  (`AVCaptureMultiCamSession` with Core Image compositing into `AVAssetWriter`) and
+  Android (CameraX 1.6.0 concurrent camera, composition mode). CameraX is pinned to
+  match `expo-camera`, and its API was read from the androidx main branch, not the
+  1.6.0 tag. Autolinking and prebuild pass; **nothing native has been compiled.**
+  Expo Go shows a labelled FRONT CAM placeholder and records the back camera only.
