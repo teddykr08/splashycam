@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet } from "react-native";
 import StampOverlay from "./StampOverlay";
 import { stampTime, type ProofRecord } from "../lib/stamp";
 import { color, mono, radius, space } from "../lib/theme";
+import { serverEnabled } from "../lib/supabase";
 
 type Props = {
   rec: ProofRecord;
@@ -40,9 +41,9 @@ const ProofCard = forwardRef<View, Props>(function ProofCard({ rec, frameUri, re
         </View>
         <Text style={s.code}>{rec.code}</Text>
         <Row k="FILMED" v={stampTime(new Date(rec.createdAt))} />
-        <Row k="REGISTERED" v={registeredAt ? stampTime(new Date(registeredAt)) : "NOT YET"} />
+        {serverEnabled ? <Row k="REGISTERED" v={registeredAt ? stampTime(new Date(registeredAt)) : "NOT YET"} /> : null}
         {rec.place ? <Row k="NEAR" v={rec.place.toUpperCase()} /> : null}
-        <Text style={s.foot}>Check the code in Splashy Cam → Check a code</Text>
+        <Text style={s.foot}>{serverEnabled ? "Check the code in Splashy Cam → Check a code" : "Filmed with Splashy Cam"}</Text>
       </View>
     </View>
   );

@@ -7,6 +7,13 @@ const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 export const supabase = url && key ? createClient(url, key) : null;
 
+/**
+ * Offline mode: with no Supabase settings in .env the app runs without a backend.
+ * Filming, the proof card and sharing work; registering and checking codes are hidden.
+ * Fill in .env later and everything switches on, no code changes.
+ */
+export const serverEnabled = supabase != null;
+
 const TIMEOUT_MS = 10_000;
 
 /** A proof as the server knows it. `createdAt` is the server's clock, not the phone's. */

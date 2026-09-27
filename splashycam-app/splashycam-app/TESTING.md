@@ -1,6 +1,10 @@
 # Testing Splashy Cam on an iPhone with Expo Go
 
-About 20 minutes. Do the steps in order; later steps use the clip from earlier ones.
+About 15 minutes. Do the steps in order; later steps use the clip from earlier ones.
+
+**This version runs in offline mode: there's no server.** Filming, the proof card
+and sharing all work. Registering and checking codes are switched off until a
+Supabase project is set up; steps 7 and 8 are for then.
 Each step says what to tap and what you should see. **If you see something
 different, note the step number.** That's the bug report.
 
@@ -16,23 +20,23 @@ Nothing here has been run on a phone yet. This checklist is how we find out.
 | **Permission prompts say "Expo Go", not "Splashy Cam"** | Expo Go shows its own wording. The Splashy Cam wording only appears in a real build. |
 | **iOS Settings: look under Expo Go** | Camera, mic, location and photos permissions belong to Expo Go while testing. |
 | **Location prompt shows "Precise: On"** | The "approximate by default" setting only applies in a real build. The app still only keeps the city. |
+| **No "Check a code" button, no registration** | Offline mode: there's no server to register codes with yet. Adding Supabase values to `.env` later switches this on. |
 | **No vibration while filming** | iOS turns the Taptic Engine off while the camera is running. The shake warning is on-screen only. This is the same in a real build. |
 
 ---
 
 ## 0. Before you start (on your computer)
 
-1. In the Supabase SQL editor, run `supabase/schema.sql`. It's safe to re-run.
-2. Copy `.env.example` to `.env` and fill in the Supabase URL and anon key.
-3. Run `npm install`, then `npx expo start`.
-4. On the iPhone, install or update **Expo Go** from the App Store.
-5. Put the iPhone on the same Wi-Fi as the computer.
-6. Point the iPhone's **Camera app** at the QR code in the terminal and tap the
+1. Run `npm install`, then `npx expo start`. **Don't** create a `.env` yet; with
+   no `.env`, the app runs in offline mode.
+2. On the iPhone, install or update **Expo Go** from the App Store.
+3. Put the iPhone on the same Wi-Fi as the computer.
+4. Point the iPhone's **Camera app** at the QR code in the terminal and tap the
    banner. It opens in Expo Go.
 
 - **"Project is incompatible with this version of Expo Go"** → update Expo Go.
 - **It can't connect** → stop the server and run `npx expo start --tunnel`.
-- **You edited `.env`** → restart with `npx expo start --clear`.
+- **You added or edited `.env`** → restart with `npx expo start --clear`.
 
 ## 1. Home screen
 
@@ -40,11 +44,9 @@ Nothing here has been run on a phone yet. This checklist is how we find out.
 - the blue "SENIOR ASSASSIN · TIMESTAMPED PROOF" line;
 - the big "Splashy Cam" title;
 - a sample stamp showing `HX7-42K`;
-- a big blue **Record an elimination** button and a **Check a code** button.
-
-**If you see a banner starting "Not connected to a server"**, the `.env` values
-aren't loaded. Filming still works, but registration and checking won't. Fix
-`.env`, restart with `--clear`, and reopen.
+- one big blue **Record an elimination** button, with **no** "Check a code" button;
+- at the bottom: "Clips stay on your phone. Offline mode: codes aren't registered
+  anywhere yet." 
 
 ## 2. Permissions (first run only)
 
@@ -103,11 +105,11 @@ Check from top to bottom:
    Photos. Allow it.
    **See:** "Saved to camera roll". Open the Photos app later to confirm the clip
    is there, **without** a stamp. That's expected in Expo Go.
-3. **Registration:** "Registering code…", then **Code registered**, "Server time
-   … Your host can look it up now."
+3. **Offline mode:** a status row, **Offline mode**, saying codes aren't registered
+   with a server in this version.
 4. **Proof card:** a card with a frame from your clip, the stamp drawn on it,
-   `TIMESTAMPED PROOF`, the code in large type, and FILMED / REGISTERED / NEAR
-   rows.
+   `TIMESTAMPED PROOF`, the code in large type, FILMED and NEAR rows (no
+   REGISTERED row), and "Filmed with Splashy Cam" at the bottom.
 5. **Frames:** tap each of the four small frames.
    **See:** the card's picture change, with the selected frame outlined in blue.
 
@@ -120,11 +122,22 @@ Check from top to bottom:
    **See:** the share sheet with a PNG image. Save it, or send it to yourself.
    **Check:** the image is sharp and the code is readable.
 3. Tap **Text host**.
-   **See:** Messages opens a new message: "Splashy Cam proof: HX7-42K. Check it in
-   Splashy Cam → Check a code." It has **no video attached**. That's expected; the
-   video goes through Send clip.
+   **See:** Messages opens a new message: "Splashy Cam clip, code HX7-42K." It has
+   **no video attached**. That's expected; the video goes through Send clip.
 4. Tap **Done**.
    **See:** the home screen.
+
+## Later: once a server is set up
+
+Steps 7 and 8 need a Supabase project:
+
+1. Run `supabase/schema.sql` in its SQL editor.
+2. Put the URL and anon key in `.env`.
+3. Restart with `npx expo start --clear`.
+
+The home screen then shows **Check a code**, the share screen registers codes, and
+Text host adds "Check it in Splashy Cam → Check a code". In steps 5–6, expect
+**Code registered** instead of Offline mode, and a REGISTERED row on the card.
 
 ## 7. Checking a code
 
@@ -140,7 +153,7 @@ Check from top to bottom:
      is original.
 3. Tap **Clear**, then type `ABC123`.
    **See:** an outlined **NOT FOUND** panel.
-4. Tap **Clear**. Copy the Text host message from step 6.3, then tap **Paste**.
+4. Tap **Clear**. Copy a Text host message (with the server on), then tap **Paste**.
    **See:** an iOS "Allow Paste" prompt. Allow it, and the code fills in from the
    whole message.
    - If you tap **Don't Allow**: "No code on the clipboard, or pasting wasn't

@@ -18,7 +18,7 @@ import { grabFrame, frameTimes, renderProofCard } from "../lib/proof";
 import { stampTime } from "../lib/stamp";
 import { settingsAppName } from "../lib/env";
 import * as StampVideo from "../modules/stamp-video";
-import type { SaveResult } from "../lib/supabase";
+import { serverEnabled, type SaveResult } from "../lib/supabase";
 import { color, radius, space, type, TOUCH } from "../lib/theme";
 
 type Step<T> = { state: "working" } | { state: "done"; value: T } | { state: "failed"; why: string };
@@ -33,7 +33,9 @@ function videoShareType(uri: string) {
 
 /** Opens Messages with the code typed in. Messages can't take a video attachment by URL. */
 function textHost(code: string) {
-  const body = encodeURIComponent(`Splashy Cam proof: ${code}. Check it in Splashy Cam → Check a code.`);
+  const body = encodeURIComponent(serverEnabled
+    ? `Splashy Cam proof: ${code}. Check it in Splashy Cam → Check a code.`
+    : `Splashy Cam clip, code ${code}.`);
   // iOS wants "sms:&body=", Android "sms:?body=".
   Linking.openURL(`sms:${Platform.OS === "ios" ? "&" : "?"}body=${body}`).catch(() =>
     Alert.alert("Couldn't open Messages", `Send the code yourself: ${code}`));
@@ -80,6 +82,7 @@ function ClipReady({ clip }: { clip: Clip }) {
   }, []);
 
   const register = useCallback(async () => {
+    if (!serverEnabled) return; // offline mode: nothing to register with
     setReg({ state: "working" });
     const r = await registerProof(clip.rec);
     setReg({ state: "done", value: r });
@@ -229,7 +232,12 @@ function ClipReady({ clip }: { clip: Clip }) {
             detail={roll.state === "failed" ? `${roll.why} Use Send clip to keep a copy.` : undefined}
           />
           <View style={s.divider} />
-          <RegistrationRow reg={reg} onRetry={register} />
+          {serverEnabled ? (
+            <RegistrationRow reg={reg} onRetry={register} />
+          ) : (
+            <StatusRow icon="information-circle-outline" title="Offline mode"
+              detail="Codes aren't registered with a server in this version. The code is on the stamp and the proof card." />
+          )}
         </View>
 
         <Text style={[type.label, s.section]}>PROOF CARD</Text>

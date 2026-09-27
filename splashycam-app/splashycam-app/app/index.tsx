@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Button from "../components/Button";
 import StampOverlay from "../components/StampOverlay";
 import { flushPending } from "../lib/pending";
-import { supabase } from "../lib/supabase";
+import { serverEnabled } from "../lib/supabase";
 import { color, radius, space, type } from "../lib/theme";
 
 const SAMPLE = { code: "HX7-42K", createdAt: new Date().toISOString(), place: "Your town" };
@@ -38,19 +38,14 @@ export default function Home() {
           <View style={s.sampleGlow} />
           <StampOverlay rec={SAMPLE} scale={1.25} style={s.sampleStamp} />
         </View>
-        <Text style={s.caption}>Every clip gets a stamp like this. The host looks up the code to see when it was registered.</Text>
+        <Text style={s.caption}>
+          {serverEnabled
+            ? "Every clip gets a stamp like this. The host looks up the code to see when it was registered."
+            : "Every clip gets a stamp like this, with its own code."}
+        </Text>
       </View>
 
       <View style={s.bottom}>
-        {!supabase ? (
-          <View style={s.waiting} accessibilityRole="alert">
-            <Ionicons name="construct-outline" size={20} color={color.blue} />
-            <Text style={s.waitingText}>
-              Not connected to a server. Filming and proof cards work, but codes won't be registered or checkable.
-              Add the Supabase values to .env and restart the dev server.
-            </Text>
-          </View>
-        ) : null}
         {waiting > 0 ? (
           <View style={s.waiting} accessibilityRole="alert">
             <Ionicons name="cloud-offline-outline" size={20} color={color.blue} />
@@ -60,9 +55,13 @@ export default function Home() {
           </View>
         ) : null}
         <Button big label="Record an elimination" icon="videocam" onPress={() => router.push("/record")} />
-        <Button label="Check a code" icon="shield-checkmark-outline" variant="secondary" onPress={() => router.push("/verify")} />
+        {serverEnabled ? (
+          <Button label="Check a code" icon="shield-checkmark-outline" variant="secondary" onPress={() => router.push("/verify")} />
+        ) : null}
         <Text style={s.privacy}>
-          Clips stay on your phone. Only the code, the time and the city go to the server.
+          {serverEnabled
+            ? "Clips stay on your phone. Only the code, the time and the city go to the server."
+            : "Clips stay on your phone. Offline mode: codes aren't registered anywhere yet."}
         </Text>
       </View>
     </View>

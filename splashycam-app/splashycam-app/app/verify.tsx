@@ -6,7 +6,7 @@ import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 import Button from "../components/Button";
 import StateNote from "../components/StateNote";
-import { lookupProof, type LookupResult } from "../lib/supabase";
+import { lookupProof, serverEnabled, type LookupResult } from "../lib/supabase";
 import { extractCode, formatCode, isCompleteCode, normalizeCode, stampTime } from "../lib/stamp";
 import { color, mono, radius, space, type, TOUCH } from "../lib/theme";
 
@@ -41,6 +41,21 @@ function CodeSlots({ value, focused }: { value: string; focused: boolean }) {
 }
 
 export default function Verify() {
+  return serverEnabled ? <VerifyOnline /> : <VerifyOffline />;
+}
+
+/** Offline mode (no Supabase in .env): nothing to look codes up in yet. */
+function VerifyOffline() {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[s.screen, s.content, { justifyContent: "center", paddingBottom: insets.bottom + space.xl }]}>
+      <StateNote icon="cloud-offline-outline" title="Checking codes comes later"
+        body="This version runs without a server, so codes aren't registered anywhere and can't be looked up yet." />
+    </View>
+  );
+}
+
+function VerifyOnline() {
   const insets = useSafeAreaInsets();
   const input = useRef<TextInput>(null);
   const [code, setCode] = useState("");

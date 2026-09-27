@@ -60,14 +60,18 @@ sends the original clip with the proof card and says so. Read
 
 ```bash
 npm install
-cp .env.example .env          # fill in Supabase values
 npx expo start                # scan the QR with your iPhone camera; opens in Expo Go
 
 npm run typecheck             # strict TypeScript, app + tests
 npm test                      # code-entry and shake-detection tests
 ```
 
-### Supabase
+### Supabase (optional for now)
+
+**Without it, the app runs in offline mode.** Filming, the proof card and sharing
+work; registering and checking codes are hidden. To switch them on, create a
+Supabase project, `cp .env.example .env`, fill in the values, and restart with
+`npx expo start --clear`. No code changes are needed.
 
 Run `supabase/schema.sql` in the SQL editor (safe to re-run). It makes one table,
 `proofs`, that the app can't touch directly. The app goes through two functions:

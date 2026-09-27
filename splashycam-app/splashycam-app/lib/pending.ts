@@ -1,5 +1,5 @@
 import { File, Paths } from "expo-file-system";
-import { saveProof, lookupProof, type SaveResult } from "./supabase";
+import { saveProof, lookupProof, serverEnabled, type SaveResult } from "./supabase";
 import type { ProofRecord } from "./stamp";
 
 /**
@@ -54,6 +54,7 @@ export async function registerProof(rec: ProofRecord): Promise<SaveResult> {
 
 /** Retry everything queued. Returns how many are still waiting. */
 export async function flushPending(): Promise<number> {
+  if (!serverEnabled) return 0;
   const list = read();
   for (const rec of list) {
     const r = await registerProof(rec);
