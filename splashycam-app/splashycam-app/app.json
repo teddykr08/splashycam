@@ -51,7 +51,8 @@
           "granularPermissions": []
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-video"
     ]
   }
 }

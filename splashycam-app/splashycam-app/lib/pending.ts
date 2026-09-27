@@ -1,5 +1,5 @@
 import { File, Paths } from "expo-file-system";
-import { saveProof, type SaveResult } from "./supabase";
+import { saveProof, lookupProof, type SaveResult } from "./supabase";
 import type { ProofRecord } from "./stamp";
 
 /**
@@ -35,13 +35,15 @@ export function queueProof(rec: ProofRecord) {
   write([...list, rec]);
 }
 
-export function isPending(code: string): boolean {
-  return read().some((r) => r.code === code);
-}
-
 /** Registers one code; queues it if offline, un-queues it once it's settled. */
 export async function registerProof(rec: ProofRecord): Promise<SaveResult> {
-  const r = await saveProof(rec);
+  let r = await saveProof(rec);
+  if (!r.ok && r.reason === "duplicate") {
+    // Almost always our own earlier attempt that landed but whose reply was lost (timeout,
+    // signal drop). A true random clash is ~1 in a billion per clip. Treat it as registered.
+    const found = await lookupProof(rec.code);
+    if (found.status === "found") r = { ok: true, createdAt: found.proof.createdAt };
+  }
   if (r.ok || r.reason === "duplicate" || r.reason === "error") {
     write(read().filter((p) => p.code !== rec.code));
   } else if (r.reason === "offline") {
