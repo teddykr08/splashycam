@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, StyleSheet, ActivityIndicator, Linking, Alert, Animated, Easing } from "react-native";
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, Linking, Alert, Animated, Easing, useWindowDimensions } from "react-native";
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import * as Location from "expo-location";
 import * as Haptics from "expo-haptics";
@@ -12,7 +12,8 @@ import Button from "../components/Button";
 import Wordmark from "../components/Wordmark";
 import { generateCode, stampDuration, type ProofRecord } from "../lib/stamp";
 import { setLastClip } from "../lib/session";
-import { settingsAppName } from "../lib/env";
+import { settingsAppName, isExpoGo } from "../lib/env";
+import * as DualCamera from "../modules/dual-camera";
 import { color, mono, radius, space, TOUCH } from "../lib/theme";
 
 const SHUTTER = 92;
@@ -45,9 +46,34 @@ function RecLight() {
   return <Animated.View style={[s.recDot, { opacity: pulse }]} />;
 }
 
+/**
+ * Where the front camera goes (top-right inset), shown when real dual recording isn't
+ * available: in Expo Go, or on a phone that can't run two cameras. It never pretends to be
+ * a camera: it says what it is and why it's empty.
+ */
+function FrontInsetPreview({ top, recording }: { top: number; recording: boolean }) {
+  const { width } = useWindowDimensions();
+  const w = Math.round(width * DualCamera.INSET.widthFraction);
+  const h = Math.round(w * DualCamera.INSET.aspect);
+  const m = Math.round(width * DualCamera.INSET.marginFraction);
+  const why = isExpoGo ? "Needs the full app" : "This phone can't run both cameras";
+  return (
+    <View pointerEvents="none" style={[s.inset, { top: top + m, right: m, width: w, height: h }]}
+          accessibilityLabel={`Front camera inset. ${why}. ${recording ? "Only the back camera is recording." : ""}`}>
+      <Ionicons name="person-outline" size={26} color="#DCE6FF" />
+      <Text style={s.insetTitle}>FRONT CAM</Text>
+      <Text style={s.insetSub}>{recording ? "Not recording" : why}</Text>
+    </View>
+  );
+}
+
 export default function Record() {
   const insets = useSafeAreaInsets();
   const cam = useRef<CameraView>(null);
+  const dual = useRef<DualCamera.DualCameraHandle>(null);
+  // Real dual recording only in a native build with the module, on a phone that supports it.
+  const [useDual] = useState(() => DualCamera.DualCameraView != null && DualCamera.isSupported());
+  const take = useRef<{ fresh: ProofRecord; t0: number } | null>(null);
   const [camPerm, requestCam] = useCameraPermissions();
   const [micPerm, requestMic] = useMicrophonePermissions();
   const [ready, setReady] = useState(false);
@@ -57,7 +83,6 @@ export default function Record() {
   const [loc, setLoc] = useState<"locating" | "ok" | "off" | "failed">("locating");
   const [camError, setCamError] = useState<string | null>(null);
   const [slowStart, setSlowStart] = useState(false);
-  const [facing, setFacing] = useState<"back" | "front">("back");
   const [rec, setRec] = useState<ProofRecord>(() => ({
     code: generateCode(), createdAt: new Date().toISOString(), place: null,
   }));
@@ -128,39 +153,61 @@ export default function Record() {
     );
   }
 
+  /** Hand a finished clip to the trim screen and line up a new code for the next one. */
+  function finish(uri: string | undefined) {
+    const t = take.current;
+    take.current = null;
+    setRecording(false);
+    setStartedAt(null);
+    if (!t) return;
+    if (!uri) {
+      Alert.alert("No clip", "The camera stopped without giving back a video file. Try again.");
+      return;
+    }
+    setLastClip({ uri, rec: t.fresh, durationMs: Date.now() - t.t0 });
+    router.push("/trim");
+    // Next clip gets a new code. This happens while the trim screen covers the camera.
+    setRec({ code: generateCode(), createdAt: new Date().toISOString(), place: null });
+  }
+
+  function failed() {
+    take.current = null;
+    setRecording(false);
+    setStartedAt(null);
+    Alert.alert("Recording stopped", "The camera stopped before the clip was saved. Try again.");
+  }
+
   async function toggle() {
-    if (!cam.current || !ready) return;
+    if (!ready) return;
     if (recording) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-      cam.current.stopRecording();
+      if (useDual) {
+        try { finish(await dual.current?.stopRecording()); } catch { failed(); }
+      } else {
+        cam.current?.stopRecording(); // the pending recordAsync below then resolves
+      }
       return;
     }
 
     // Keep the code already on screen: it must not change when you press record.
     // Only the start time is fresh. A new code is made after the clip is handed off.
     const fresh: ProofRecord = { code: rec.code, createdAt: new Date().toISOString(), place };
-    const t0 = Date.now();
+    take.current = { fresh, t0: Date.now() };
     setRec(fresh);
-    setStartedAt(t0);
+    setStartedAt(take.current.t0);
     setRecording(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
 
+    // No length limit. The part to keep (max 60 s) is chosen on the trim screen.
+    if (useDual) {
+      try { await dual.current?.startRecording(); } catch { failed(); }
+      return;
+    }
     try {
-      // No length limit. The part to keep (max 60 s) is chosen on the trim screen.
-      const video = await cam.current.recordAsync();
-      if (!video?.uri) {
-        Alert.alert("No clip", "The camera stopped without giving back a video file. Try again.");
-        return;
-      }
-      setLastClip({ uri: video.uri, rec: fresh, durationMs: Date.now() - t0 });
-      router.push("/trim");
-      // Next clip gets a new code. This happens while the share screen covers the camera.
-      setRec({ code: generateCode(), createdAt: new Date().toISOString(), place: null });
+      const video = await cam.current?.recordAsync();
+      finish(video?.uri);
     } catch {
-      Alert.alert("Recording stopped", "The camera stopped before the clip was saved. Try again.");
-    } finally {
-      setRecording(false);
-      setStartedAt(null);
+      failed();
     }
   }
 
@@ -174,15 +221,27 @@ export default function Record() {
 
   return (
     <View style={s.screen}>
-      <CameraView
-        ref={cam}
-        style={StyleSheet.absoluteFill}
-        mode="video"
-        facing={facing}
-        videoStabilizationMode="standard"  /* smooths hand shake; won't fix a loose mount */
-        onCameraReady={() => setReady(true)}
-        onMountError={(e) => setCamError(e.message || "The camera couldn't be opened. Close other camera apps and try again.")}
-      />
+      {useDual && DualCamera.DualCameraView ? (
+        <DualCamera.DualCameraView
+          ref={dual}
+          style={StyleSheet.absoluteFill}
+          onCameraReady={() => setReady(true)}
+          onMountError={(e) => setCamError(e.nativeEvent.message || "The cameras couldn't be opened.")}
+        />
+      ) : (
+        <>
+          <CameraView
+            ref={cam}
+            style={StyleSheet.absoluteFill}
+            mode="video"
+            facing="back"
+            videoStabilizationMode="standard"  /* smooths hand shake; won't fix a loose mount */
+            onCameraReady={() => setReady(true)}
+            onMountError={(e) => setCamError(e.message || "The camera couldn't be opened. Close other camera apps and try again.")}
+          />
+          <FrontInsetPreview top={insets.top + space.sm + TOUCH} recording={recording} />
+        </>
+      )}
 
       {/* Overlays are siblings, not children: CameraView doesn't support children. */}
       <View style={[s.top, { paddingTop: insets.top + space.sm }]} pointerEvents="box-none">
@@ -229,18 +288,7 @@ export default function Record() {
               : recording ? <View style={s.stopSquare} />
               : <View style={s.recCore} />}
           </Pressable>
-          <View style={s.side}>
-            <Pressable
-              onPress={() => setFacing((f) => (f === "back" ? "front" : "back"))}
-              disabled={recording /* flipping mid-recording stops the recording (expo-camera docs) */}
-              accessibilityRole="button"
-              accessibilityLabel={facing === "back" ? "Switch to front camera" : "Switch to back camera"}
-              style={({ pressed }) => [s.round, pressed && s.roundPressed, recording && s.hidden]}
-              hitSlop={8}
-            >
-              <Ionicons name="camera-reverse-outline" size={30} color="#fff" />
-            </Pressable>
-          </View>
+          <View style={s.side} />
         </View>
         <Text style={s.hint} numberOfLines={2}>{hint}</Text>
       </View>
@@ -257,6 +305,11 @@ const s = StyleSheet.create({
   round: { width: TOUCH, height: TOUCH, borderRadius: TOUCH / 2, backgroundColor: color.scrim,
            alignItems: "center", justifyContent: "center" },
   spacer: { width: TOUCH, height: TOUCH },
+  inset: { position: "absolute", borderRadius: 14, borderWidth: 2, borderStyle: "dashed",
+           borderColor: "rgba(220,230,255,0.7)", backgroundColor: color.scrim,
+           alignItems: "center", justifyContent: "center", gap: 4, padding: 6 },
+  insetTitle: { color: "#fff", fontFamily: mono, fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
+  insetSub: { color: "#DCE6FF", fontSize: 11, fontWeight: "600", textAlign: "center" },
   roundPressed: { backgroundColor: "rgba(0,0,0,0.8)" },
   hidden: { opacity: 0 },
   recPill: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: color.scrim,
