@@ -7,38 +7,40 @@ builds in the cloud — **no Mac required**.
 
 ---
 
-## What a code proves, and what it doesn't
+## What a code proves right now, and what it doesn't
 
-Every clip gets a random six-character code. The server records when that code was
-registered, and in which city.
+**There's no backend at the moment.** Every clip gets a random six-character code
+that's made on the phone and never leaves it. The time on the stamp comes from the
+phone's clock.
 
-- **It proves** that a clip carrying this code was registered through Splashy Cam
-  at that time. The server sets the time, so the phone can't backdate it.
-- **It doesn't prove** that the footage is original or unedited. Someone could copy
-  a real code onto different footage. The code is a timestamped proof, not a
-  tamper seal.
+- **It does:** tie a clip to its proof card. The same code is on the stamp, on the
+  card, and on the share screen, so a host can match a card to a clip.
+- **It doesn't prove when the clip was filmed.** A phone's clock can be changed in
+  Settings, and nothing independent records the time.
+- **It doesn't prove the footage is original** either. A code could be copied onto
+  other footage.
 
-Hosts should check that the code on the clip or proof card matches, and that the
-registration time fits the game. Describe it that way in anything you publish.
+So for now it's a **timestamped proof in the plain sense**: a stamp with a time on
+it, not a verified record. The server version (kept in `later/`) adds a
+registration time the phone can't fake. It still won't prove footage is original.
+Describe it this way in anything you publish.
 
 ---
 
 ## What it does today
 
 - **Record** — full-screen camera with a camcorder stamp on the preview: code, a
-  live ticking time, and city. A pulsing red REC light shows while filming, and a
-  "TIGHTEN THE DIAL" warning appears if the mount rattles.
+  live ticking time, and city. A pulsing red REC light shows while filming, a
+  countdown appears in the last 10 seconds of the 60-second limit, and a
+  "TIGHTEN THE DIAL" warning appears if the mount rattles. Front/back flip.
 - **Proof card** — after filming, pick a frame and get a PNG with the stamp drawn
   on it. In Expo Go this is how the stamp reaches the host.
-- **Send** — the clip goes to the camera roll. One tap opens the share sheet
-  (Messages, TikTok…), one sends the proof card, and one texts the code.
-- **Check a code** — type or paste a code for a clear registered / not found
-  result, with the server's registration time and the city.
-- **Privacy** — the video never leaves the phone. The server stores three things:
-  code, timestamp, city. No accounts, no address, no upload costs. (Turning the
+- **Send** — the clip goes to the camera roll. Two buttons: **Send clip** and
+  **Share proof card**. Both open the normal share sheet (Messages, TikTok, Save…).
+- **Privacy** — nothing is uploaded: no video, no code, no location. (Turning the
   rough location into a city name uses the phone's built-in geocoder: Apple's on
   iOS, the device's, usually Google's, on Android. So Apple or Google sees the
-  rough coordinates. Our server never does.)
+  rough coordinates.)
 
 **Read AUDIT.md.** It covers what was checked, what was fixed, and what still
 needs a real phone. **Read TESTING.md** before trying it on your phone.
@@ -66,19 +68,11 @@ npm run typecheck             # strict TypeScript, app + tests
 npm test                      # code-entry and shake-detection tests
 ```
 
-### Supabase (optional for now)
+### Server: later
 
-**Without it, the app runs in offline mode.** Filming, the proof card and sharing
-work; registering and checking codes are hidden. To switch them on, create a
-Supabase project, `cp .env.example .env`, fill in the values, and restart with
-`npx expo start --clear`. No code changes are needed.
-
-Run `supabase/schema.sql` in the SQL editor (safe to re-run). It makes one table,
-`proofs`, that the app can't touch directly. The app goes through two functions:
-`register_proof`, where the server sets the timestamp so it can't be backdated,
-and `verify_proof`, which looks up one code, so nobody can download the whole list.
-
-Put the project URL and anon key in `.env`.
+There's no backend right now, and nothing reads `.env`. The Supabase schema,
+client, offline queue and "Check a code" screen are kept, unused, in `later/` and
+`supabase/schema.sql`. `later/README.md` says how to bring them back.
 
 ### Building a real app
 
@@ -100,29 +94,29 @@ Android first if you want to move before paying Apple.
 ## Structure
 
 ```
-app/_layout.tsx     navigation
-app/index.tsx       home
-app/record.tsx      camera, live stamp, REC light, shake warning
-app/clip.tsx        after filming: play, stamp (native builds), save, register, proof card, send
-app/verify.tsx      code lookup
-components/         button, stamp, proof card, state notes
-lib/theme.ts        colors, type, spacing, touch sizes
-lib/code.ts         code format/entry helpers (pure, tested)
-lib/stamp.ts        code generation
-lib/shake.ts        shake detection (pure, tested); useShake.ts wires the sensor
-lib/pending.ts      offline queue for codes that couldn't register yet
-lib/proof.ts        frame grabs + proof card rendering
-lib/env.ts          Expo Go detection
-lib/supabase.ts     the tiny bit of server we use
-modules/stamp-video native burn-in (untested; see its README)
-supabase/schema.sql one table, two functions
-eas.json            EAS build profiles (preview = internal install, production = stores)
-tests/              node:test unit tests
+app/_layout.tsx      navigation
+app/index.tsx        home
+app/record.tsx       camera, live stamp, REC light, countdown, flip, shake warning
+app/clip.tsx         after filming: play, stamp (native builds), save, proof card, send
+components/          button, wordmark, stamp, proof card, state notes
+lib/theme.ts         colors, type, spacing, touch sizes
+lib/code.ts          code format helpers (pure, tested)
+lib/stamp.ts         code generation (on the phone)
+lib/shake.ts         shake detection (pure, tested); useShake.ts wires the sensor
+lib/proof.ts         frame grabs + proof card rendering
+lib/env.ts           Expo Go detection
+modules/stamp-video  native burn-in (untested; see its README)
+modules/dual-camera  front + back at once: capability check only (see its README)
+later/               server code kept for later, not used by the app
+supabase/schema.sql  later: one table, two functions
+eas.json             EAS build profiles (preview = internal install, production = stores)
+tests/               node:test unit tests
 ```
 
 ## Not built yet
 
 - A tested burn-in: the code is written but unproven (see above)
-- Front + back camera at once — needs a native module, not in Expo's camera
+- Front + back camera at once: designed and prepped in `modules/dual-camera`, not written
+- A server to register and check codes (kept in `later/`)
 - Host dashboard for reviewing a game's clips
 - Affiliate codes / shop

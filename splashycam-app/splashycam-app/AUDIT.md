@@ -395,3 +395,34 @@ launch, not in this environment.
   avoids manual orientation math. On Android, Media3 is pinned to 1.9.0 to match
   expo-video. The app uses it only if the native module is present, and falls
   back to the proof card on any failure.
+
+---
+
+## 10. After the first iPhone test
+
+- **Scope: no backend.** The Supabase client, offline queue and Check a code screen
+  moved to `later/server/`. They're still type-checked but never imported, and I
+  confirmed there are zero supabase-js modules in either bundle. `schema.sql` and
+  `.env.example` are marked LATER. **The verify screen is removed, not stubbed:**
+  with no server there's nothing to check, and a screen that can only say so is a
+  dead end.
+- **What a code means now.** It's generated on the phone and the time is the
+  phone's clock, which the user can change. So it ties a clip to its card; it
+  doesn't independently prove when the clip was filmed. The README says so.
+- **The moving code, root causes:**
+  1. Pressing record generated a new code, so the code changed as the take began.
+  2. The stamp shared a column with the shutter's hint and notes, so text changes
+     pushed it up or down.
+  3. Losing the city line shrank the stamp.
+
+  Fixed with one code per take, an absolutely positioned stamp above a fixed-height
+  control area, and a four-line stamp.
+- **Top right:** the "60s" badge was ours and is gone. The countdown shows only for
+  the last 10 seconds. Nothing else in our code draws a control there, so any
+  settings-style button is Expo Go's developer menu.
+- **Share screen:** Text host removed, and Done moved to a header ✕. That leaves two
+  buttons: Send clip and Share proof card.
+- **Flip camera** added, hidden while recording. **Dual recording** is prepped in
+  `modules/dual-camera`: a capability check plus a design, no recording code.
+- **Identity:** a drop-mark wordmark on home, the camera, the share header and the
+  proof card.

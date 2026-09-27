@@ -23,8 +23,6 @@ original clip with the proof card and says so on screen.
 npm install -g eas-cli
 eas login
 eas init                                    # links the project, adds extra.eas.projectId to app.json
-eas env:create --environment preview --name EXPO_PUBLIC_SUPABASE_URL --value https://YOUR-PROJECT.supabase.co --visibility plaintext
-eas env:create --environment preview --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value YOUR_ANON_KEY --visibility plaintext
 eas device:create                           # register your iPhone for internal distribution
 eas build --platform ios --profile preview
 ```
@@ -32,9 +30,10 @@ eas build --platform ios --profile preview
 Android needs no paid account: `eas build --platform android --profile preview`
 produces an APK you can install from a link.
 
-`.env` is git-ignored, so EAS doesn't upload it. That's why the Supabase values
-are set with `eas env:create` above. The anon key is public by design; the
-database functions are what protect the data.
+The app has no backend right now, so no environment variables are needed. If the
+server comes back (`later/README.md`), set the Supabase values with
+`eas env:create --environment preview …`: `.env` is git-ignored, so EAS doesn't
+upload it.
 
 ## What to test on the device, in order
 
