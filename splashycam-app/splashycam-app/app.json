@@ -11,10 +11,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "txt.teddy.splashycam",
       "infoPlist": {
-        "NSCameraUsageDescription": "Splashy Cam records your eliminations.",
-        "NSMicrophoneUsageDescription": "Splashy Cam records audio with your clips.",
-        "NSPhotoLibraryAddUsageDescription": "Splashy Cam saves your clips to your camera roll.",
-        "NSLocationWhenInUseUsageDescription": "Splashy Cam stamps the city (never your exact address) on a clip so hosts can verify it."
+        "NSLocationDefaultAccuracyReduced": true
       }
     },
     "android": {
@@ -23,6 +20,9 @@
         "CAMERA",
         "RECORD_AUDIO",
         "ACCESS_COARSE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "plugins": [
@@ -30,16 +30,27 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Splashy Cam records your eliminations."
+          "cameraPermission": "Splashy Cam records your eliminations.",
+          "microphonePermission": "Splashy Cam records audio with your clips.",
+          "recordAudioAndroid": true
         }
       ],
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Splashy Cam stamps the city on your clip."
+          "locationWhenInUsePermission": "Splashy Cam stamps the city (never your exact address) on a clip so hosts can verify it.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false
         }
       ],
-      "expo-media-library",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": false,
+          "savePhotosPermission": "Splashy Cam saves your clips to your camera roll.",
+          "granularPermissions": []
+        }
+      ],
       "expo-asset"
     ]
   }
