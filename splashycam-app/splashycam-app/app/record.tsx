@@ -9,6 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import StampOverlay from "../components/StampOverlay";
 import StateNote from "../components/StateNote";
 import Button from "../components/Button";
+import Wordmark from "../components/Wordmark";
 import { generateCode, stampDuration, type ProofRecord } from "../lib/stamp";
 import { setLastClip } from "../lib/session";
 import { settingsAppName } from "../lib/env";
@@ -215,7 +216,9 @@ export default function Record() {
             <RecLight />
             <Text style={s.recText}>REC {stampDuration(elapsed)}</Text>
           </View>
-        ) : null}
+        ) : (
+          <Wordmark onFootage />
+        )}
 
         {/* Top-right stays empty except for the final-seconds countdown. */}
         <View style={[s.round, !showCountdown && s.hidden]} pointerEvents="none"

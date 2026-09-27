@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Button from "../components/Button";
 import StateNote from "../components/StateNote";
 import ProofCard from "../components/ProofCard";
+import Wordmark from "../components/Wordmark";
 import { getLastClip, type Clip } from "../lib/session";
 import { grabFrame, frameTimes, renderProofCard } from "../lib/proof";
 import { settingsAppName } from "../lib/env";
@@ -150,7 +151,7 @@ function ClipReady({ clip }: { clip: Clip }) {
         >
           <Ionicons name="close" size={28} color={color.text} />
         </Pressable>
-        <Text style={s.headerTitle}>Your clip</Text>
+        <Wordmark />
         <View style={s.close} />
       </View>
       <ScrollView contentContainerStyle={s.scroll}>
@@ -315,5 +316,4 @@ const s = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between",
             paddingHorizontal: space.sm, paddingBottom: space.xs },
   close: { width: TOUCH, height: TOUCH, borderRadius: TOUCH / 2, alignItems: "center", justifyContent: "center" },
-  headerTitle: { color: color.text, fontSize: 17, fontWeight: "800" },
 });

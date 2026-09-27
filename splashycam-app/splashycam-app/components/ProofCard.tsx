@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import StampOverlay from "./StampOverlay";
 import { stampTime, type ProofRecord } from "../lib/stamp";
 import { color, mono, radius, space } from "../lib/theme";
@@ -33,8 +34,8 @@ const ProofCard = forwardRef<View, Props>(function ProofCard({ rec, frameUri, on
 
       <View style={s.body}>
         <View style={s.headRow}>
-          <View style={s.dot} />
-          <Text style={s.kicker}>TIMESTAMPED PROOF</Text>
+          <Ionicons name="water" size={12} color={color.blue} />
+          <Text style={s.kicker}>SPLASHY CAM · TIMESTAMPED PROOF</Text>
         </View>
         <Text style={s.code}>{rec.code}</Text>
         <Row k="FILMED" v={stampTime(new Date(rec.createdAt))} />
@@ -64,7 +65,6 @@ const s = StyleSheet.create({
   stamp: { position: "absolute", left: 10, bottom: 10 },
   body: { flex: 1, paddingHorizontal: space.md, paddingTop: space.sm, paddingBottom: space.sm, gap: 3 },
   headRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: color.blue },
   kicker: { fontFamily: mono, fontSize: 10, letterSpacing: 2, color: color.blue, fontWeight: "700" },
   code: { fontFamily: mono, fontSize: 38, letterSpacing: 5, color: color.text, fontWeight: "700",
           fontVariant: ["tabular-nums"], marginVertical: 2 },

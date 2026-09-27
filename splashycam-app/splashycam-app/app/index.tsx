@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Button from "../components/Button";
 import StampOverlay from "../components/StampOverlay";
+import Wordmark from "../components/Wordmark";
 import { color, radius, space, type } from "../lib/theme";
 
 const SAMPLE = { code: "HX7-42K", createdAt: new Date().toISOString(), place: "Your town" };
@@ -13,10 +14,9 @@ export default function Home() {
     <View style={[s.screen, { paddingTop: insets.top + space.xl, paddingBottom: insets.bottom + space.md }]}>
       <View style={s.brand}>
         <View style={s.kickerRow}>
-          <View style={s.dot} />
           <Text style={s.kicker}>SENIOR ASSASSIN · TIMESTAMPED PROOF</Text>
         </View>
-        <Text style={type.display}>Splashy Cam</Text>
+        <Wordmark size="lg" />
         <Text style={[type.body, s.tagline]}>Film the hit. Get a timestamped proof.</Text>
       </View>
 
@@ -42,7 +42,6 @@ const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg, paddingHorizontal: space.lg },
   brand: { gap: space.xs },
   kickerRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: space.xs },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: color.blue },
   kicker: { ...type.label, color: color.blue, fontSize: 12 },
   tagline: { fontSize: 18 },
   sample: { flex: 1, justifyContent: "center", gap: space.sm, paddingVertical: space.lg },
