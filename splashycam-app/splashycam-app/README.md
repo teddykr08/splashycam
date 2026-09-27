@@ -15,7 +15,10 @@ builds in the cloud — **no Mac required**.
 - **Verify** — anyone types a code and sees whether that clip is real, when it was
   filmed, and roughly where.
 - **Privacy** — the video never leaves the phone. The server stores three things:
-  code, timestamp, city. No accounts, no address, no upload costs.
+  code, timestamp, city. No accounts, no address, no upload costs. (Turning the
+  rough location into a city name uses the phone's built-in geocoder: Apple's on
+  iOS, the device's, usually Google's, on Android. So Apple or Google sees the
+  rough coordinates. Our server never does.)
 
 ## Known gap, read this before building
 
@@ -47,9 +50,10 @@ npx expo start                # scan the QR with Expo Go to try it
 
 ### Supabase
 
-Run `supabase/schema.sql` in the SQL editor. It makes one table, `proofs`, with
-row-level security allowing anonymous insert and read — which is correct here,
-since a proof code is meant to be publicly checkable and holds nothing private.
+Run `supabase/schema.sql` in the SQL editor (safe to re-run). It makes one table,
+`proofs`, that the app can't touch directly. The app goes through two functions:
+`register_proof`, where the server sets the timestamp so it can't be backdated,
+and `verify_proof`, which looks up one code, so nobody can download the whole list.
 
 Put the project URL and anon key in `.env`.
 

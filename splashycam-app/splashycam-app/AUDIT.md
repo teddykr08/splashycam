@@ -216,3 +216,46 @@ It currently looks like a wireframe:
 - No designed states for loading, no signal, or no Supabase config.
 
 Addressed in Phase 3.
+
+---
+
+## Phase 2: what was fixed
+
+**Checked after the fixes:**
+
+- `npx tsc --noEmit` is clean in strict mode.
+- `expo install --check` reports all dependencies match SDK 57.
+- `expo start` serves both the Android bundle (1,543 modules) and the iOS bundle
+  (1,380 modules).
+- The schema was run against a local PostgreSQL 16, not a live Supabase project. It
+  passed on three runs: upgrading from the old schema, a fresh database, and running
+  the file twice. I tested each behavior as the `anon` role:
+  - Register a code and verify it: works.
+  - Unknown code: returns 0 rows.
+  - Direct `select` and direct `insert` with a backdated time: both refused with
+    permission denied.
+  - Duplicate code, bad code characters, and an 81-character place: all rejected.
+- **Not checked on a device.**
+
+| # | Finding | Fix |
+|---|---|---|
+| §4.1 | Proofs forgeable | `register_proof(code, place)` is the only write path, and it runs with elevated rights. The server sets `created_at`; the client can't send one. Codes must match the 6-character alphabet, and `place` is capped at 80 characters. |
+| §4.2 | Table listable | Anon has no table privileges. `verify_proof(code)` returns at most one row. |
+| §4.3 | "Saved" when not registered | `saveProof` returns a typed result: `unconfigured`, `offline`, `duplicate` or `error`, each with its own message. It has a 10-second timeout. |
+| §4.4 | Network error shown as "not real" | `lookupProof` returns `found`, `not_found`, `unconfigured` or `error`, and the verify screen says which. It has the same timeout, so it can't hang on "Checking…". |
+| §4.6 | `CameraView` children | Stamp and controls are now siblings, absolutely positioned. |
+| §4.6 | Recording before ready | Shutter disabled until `onCameraReady`. `onMountError` is handled. |
+| §4.6 | Permission dead-end | When `canAskAgain` is false, the button reads "Open Settings" and calls `Linking.openSettings()`. A spinner shows while permissions load. |
+| §4.7 | Failure paths | A failed recording, a failed camera-roll save and a failed registration are reported separately. A failed save still lets you share the clip. |
+| §4.8 | Stamp time vs server time | The verify screen shows the **server's** registration time, labelled "Registered". |
+| §4.9 | `verifyUrl()` | Removed. |
+| §4.10 | Location permission | iOS: when-in-use only. The "Always" strings are set to `false`, and `NSLocationDefaultAccuracyReduced` is set so iOS gives approximate location by default. Android: `ACCESS_FINE_LOCATION` is blocked, leaving coarse only. |
+| §2 crypto | `require("expo-crypto")` returning `any` | Typed import: `import { getRandomValues } from "expo-crypto"`. |
+| §3 | `any` in verify | Typed union state; no `any` left in app code. |
+| — | Media permissions | `expo-media-library` plugin: `photosPermission: false` (the app never reads the library) and `granularPermissions: []`, so no `READ_MEDIA_*` in the Android manifest. Saving uses write-only access, which on Android 13+ asks for no media permissions. That's also why it works in Expo Go: `SystemPermissionsDelegate.kt` only refuses photo and video *read* access there. |
+| — | Code entry | `normalizeCode()` accepts lower case, spaces and dashes. It also maps the look-alikes O→0 and I/L→1, since those letters aren't in the alphabet. |
+
+**Action for you: re-run `supabase/schema.sql` in the Supabase SQL editor.** It's
+safe on an existing `proofs` table. It drops the old open policies and adds the two
+functions. Until you do, the app's calls to `register_proof` and `verify_proof` will
+fail, and the app will report "error".
