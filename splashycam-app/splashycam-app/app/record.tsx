@@ -68,8 +68,11 @@ export default function Record() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
   }, [shake.shaky]);
 
-  // City-level location only. Never the street address.
+  // City-level location only. Never the street address. Asked only after camera + mic are
+  // granted, so the iOS location prompt doesn't land on top of the camera-permission screen.
+  const avGranted = !!camPerm?.granted && !!micPerm?.granted;
   useEffect(() => {
+    if (!avGranted) return;
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") { setLoc("off"); return; }
@@ -78,7 +81,7 @@ export default function Record() {
       const city = p ? [p.city, p.region].filter(Boolean).join(", ") : "";
       if (city) { setPlace(city); setLoc("ok"); } else setLoc("failed");
     })().catch(() => setLoc("failed"));
-  }, []);
+  }, [avGranted]);
 
   // If the preview never reports ready, say so instead of spinning forever.
   useEffect(() => {
