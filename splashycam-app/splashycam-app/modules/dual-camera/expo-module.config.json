@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["DualCameraModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.dualcamera.DualCameraModule"]
+  }
+}
