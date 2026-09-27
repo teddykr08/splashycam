@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
-import { View, Text, ScrollView, Pressable, Image, StyleSheet, ActivityIndicator, Alert, Linking, Platform } from "react-native";
+import { View, Text, ScrollView, Pressable, Image, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { router } from "expo-router";
 import { useEvent } from "expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,14 +24,6 @@ function videoShareType(uri: string) {
   return uri.toLowerCase().endsWith(".mov")
     ? { mimeType: "video/quicktime", UTI: "com.apple.quicktime-movie" }
     : { mimeType: "video/mp4", UTI: "public.mpeg-4" };
-}
-
-/** Opens Messages with the code typed in. Messages can't take a video attachment by URL. */
-function textHost(code: string) {
-  const body = encodeURIComponent(`Splashy Cam clip, code ${code}.`);
-  // iOS wants "sms:&body=", Android "sms:?body=".
-  Linking.openURL(`sms:${Platform.OS === "ios" ? "&" : "?"}body=${body}`).catch(() =>
-    Alert.alert("Couldn't open Messages", `Send the code yourself: ${code}`));
 }
 
 export default function ClipScreen() {
@@ -148,7 +140,20 @@ function ClipReady({ clip }: { clip: Clip }) {
 
   return (
     <View style={s.screen}>
-      <ScrollView contentContainerStyle={[s.scroll, { paddingTop: insets.top + space.sm }]}>
+      <View style={[s.header, { paddingTop: insets.top + space.xs }]}>
+        <Pressable
+          onPress={() => router.dismissTo("/")}
+          accessibilityRole="button"
+          accessibilityLabel="Done, back to home"
+          style={({ pressed }) => [s.close, pressed && s.pressed]}
+          hitSlop={8}
+        >
+          <Ionicons name="close" size={28} color={color.text} />
+        </Pressable>
+        <Text style={s.headerTitle}>Your clip</Text>
+        <View style={s.close} />
+      </View>
+      <ScrollView contentContainerStyle={s.scroll}>
         <View style={s.videoBox}>
           <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls />
           {playerStatus === "error" ? (
@@ -242,13 +247,9 @@ function ClipReady({ clip }: { clip: Clip }) {
       <View style={[s.actions, { paddingBottom: insets.bottom + space.sm }]}>
         <Button big label="Send clip" icon="paper-plane" onPress={shareClip}
                 loading={sharing === "clip" || burn.state === "working"} disabled={!!sharing || shareBlocked || burn.state === "working"} />
-        <View style={s.actionRow}>
-          <Button label="Proof card" icon="image-outline" variant="secondary" style={s.flex} onPress={shareCard}
-                  loading={sharing === "card"} disabled={!!sharing || shareBlocked || (!!frameUri && !frameLoaded)} />
-          <Button label="Text host" icon="chatbubble-outline" variant="secondary" style={s.flex}
-                  onPress={() => textHost(clip.rec.code)} disabled={!!sharing} />
-        </View>
-        <Button label="Done" variant="ghost" onPress={() => router.dismissTo("/")} />
+        {/* One card button: the share sheet already offers Save Image and every way to send. */}
+        <Button label="Share proof card" icon="image-outline" variant="secondary" onPress={shareCard}
+                loading={sharing === "card"} disabled={!!sharing || shareBlocked || (!!frameUri && !frameLoaded)} />
       </View>
     </View>
   );
@@ -311,5 +312,8 @@ const s = StyleSheet.create({
   caption: { color: color.faint, fontSize: 13, textAlign: "center" },
   actions: { paddingHorizontal: space.md, paddingTop: space.sm, gap: space.sm, borderTopWidth: 1, borderTopColor: color.line,
              backgroundColor: color.bg },
-  actionRow: { flexDirection: "row", gap: space.sm },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+            paddingHorizontal: space.sm, paddingBottom: space.xs },
+  close: { width: TOUCH, height: TOUCH, borderRadius: TOUCH / 2, alignItems: "center", justifyContent: "center" },
+  headerTitle: { color: color.text, fontSize: 17, fontWeight: "800" },
 });
