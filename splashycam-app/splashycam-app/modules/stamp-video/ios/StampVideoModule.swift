@@ -18,6 +18,8 @@ internal struct StampSpec: Record {
   @Field var code: String = ""
   @Field var startEpochMs: Double = 0
   @Field var place: String? = nil
+  @Field var trimStartMs: Double? = nil
+  @Field var trimEndMs: Double? = nil
 }
 
 internal final class NoVideoTrackException: Exception {
@@ -62,6 +64,10 @@ internal enum StampVideoRenderer {
     let composition = try await AVMutableVideoComposition.videoComposition(
       with: asset,
       applyingCIFiltersWithHandler: { request in
+        // CHECK ON DEVICE: with session.timeRange set below, compositionTime should still be on
+        // the source recording's timeline (so the clock stays true to when it was filmed). If
+        // the trimmed output's clock starts at the recording's start time instead, add
+        // trimStartMs / 1000 here.
         let second = max(0, Int(CMTimeGetSeconds(request.compositionTime)))
         let stamp = cache.image(for: second) {
           StampImage.make(spec: spec, at: start.addingTimeInterval(TimeInterval(second)), scale: scale)
@@ -81,6 +87,13 @@ internal enum StampVideoRenderer {
     }
     session.videoComposition = composition
     session.outputURL = out
+    if let startMs = spec.trimStartMs, let endMs = spec.trimEndMs, endMs > startMs {
+      // Trim and stamp in the same export: one re-encode, not two.
+      session.timeRange = CMTimeRange(
+        start: CMTime(value: CMTimeValue(startMs), timescale: 1000),
+        end: CMTime(value: CMTimeValue(endMs), timescale: 1000)
+      )
+    }
     session.outputFileType = .mp4
     session.shouldOptimizeForNetworkUse = true
 

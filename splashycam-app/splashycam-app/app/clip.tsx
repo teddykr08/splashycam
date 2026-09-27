@@ -80,6 +80,8 @@ function ClipReady({ clip }: { clip: Clip }) {
             code: clip.rec.code,
             startEpochMs: new Date(clip.rec.createdAt).getTime(),
             place: clip.rec.place,
+            trimStartMs: range.startMs,
+            trimEndMs: range.endMs,
           });
           if (live) { setBurn({ state: "done", value: keep }); player.replace(keep); }
         } catch (e) {

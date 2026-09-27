@@ -15,10 +15,16 @@ export type StampSpec = {
   startEpochMs: number;
   /** City-level place or null. Never a street address. */
   place: string | null;
+  /** Keep only this part of the recording (ms from its start). Omit both to keep it all. */
+  trimStartMs?: number;
+  trimEndMs?: number;
 };
 
 type NativeStampVideo = {
-  /** Returns a file:// URI of a new .mp4 in the app cache. The input file is left alone. */
+  /**
+   * Trims (if trimStartMs/trimEndMs are given) and burns in the stamp in ONE export.
+   * Returns a file:// URI of a new .mp4 in the app cache. The input file is left alone.
+   */
   burnStamp(inputUri: string, spec: StampSpec): Promise<string>;
 };
 

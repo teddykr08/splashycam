@@ -53,6 +53,12 @@ class StampSpec : Record {
 
   @Field
   val place: String? = null
+
+  @Field
+  val trimStartMs: Double? = null
+
+  @Field
+  val trimEndMs: Double? = null
 }
 
 class StampVideoModule : Module() {
@@ -91,12 +97,17 @@ internal class StampVideoRenderer(private val context: Context) {
       .setBackgroundFrameAnchor(-0.94f, -0.94f)
       .build()
 
+    val trimOffsetS = (spec.trimStartMs ?: 0.0).toLong() / 1000L
+
     val overlay = object : BitmapOverlay() {
       private var second = -1L
       private var bitmap: Bitmap? = null
 
       override fun getBitmap(presentationTimeUs: Long): Bitmap {
-        val s = maxOf(0L, presentationTimeUs / 1_000_000L)
+        // CHECK ON DEVICE: this assumes Media3 hands effects timestamps that start at 0 for the
+        // clipped item, so the trim start is added back to keep the clock true to when it was
+        // filmed. If the stamped clock runs ahead by the trim start, drop `trimOffsetS`.
+        val s = trimOffsetS + maxOf(0L, presentationTimeUs / 1_000_000L)
         val cached = bitmap
         if (cached != null && s == second) return cached
         val next = StampBitmap.make(spec, Date(spec.startEpochMs.toLong() + s * 1000L), scale)
@@ -108,7 +119,25 @@ internal class StampVideoRenderer(private val context: Context) {
       override fun getOverlaySettings(presentationTimeUs: Long): OverlaySettings = settings
     }
 
-    val edited = EditedMediaItem.Builder(MediaItem.fromUri(input))
+    val startMs = spec.trimStartMs?.toLong()
+    val endMs = spec.trimEndMs?.toLong()
+    val trimmed = startMs != null && endMs != null && endMs > startMs
+    val mediaItem = if (trimmed) {
+      // Trim and stamp in the same export: one re-encode, not two.
+      MediaItem.Builder()
+        .setUri(input)
+        .setClippingConfiguration(
+          MediaItem.ClippingConfiguration.Builder()
+            .setStartPositionMs(startMs!!)
+            .setEndPositionMs(endMs!!)
+            .build()
+        )
+        .build()
+    } else {
+      MediaItem.fromUri(input)
+    }
+
+    val edited = EditedMediaItem.Builder(mediaItem)
       .setEffects(Effects(listOf(), listOf(OverlayEffect(listOf(overlay)))))
       .build()
 
