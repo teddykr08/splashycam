@@ -1,6 +1,6 @@
 /**
- * dual-camera: record the back camera full-frame with the front camera inset top-right,
- * as ONE video (the BeReal / TikTok dual layout).
+ * dual-camera: record the front camera on the top half and the back camera on the bottom
+ * half, stacked into ONE video.
  *
  * STATUS: native code written for iOS (AVCaptureMultiCamSession) and Android (CameraX
  * concurrent-camera composition), but NEVER COMPILED OR RUN. It only exists in an EAS
@@ -49,5 +49,9 @@ export const DualCameraView: ComponentType<DualCameraViewProps> | null = isAvail
   ? requireNativeView<DualCameraViewProps>("DualCamera")
   : null;
 
-/** Inset geometry shared by the Expo Go layout preview and the native views. */
-export const INSET = { widthFraction: 0.3, aspect: 16 / 9, marginFraction: 0.035 } as const;
+/**
+ * Split-screen layout shared by the Expo Go preview and the native views: front camera on
+ * the top half, back camera on the bottom half. (Other layouts, like a small front inset or
+ * back-only, could become a personal setting later.)
+ */
+export const LAYOUT = { frontFraction: 0.5 } as const;

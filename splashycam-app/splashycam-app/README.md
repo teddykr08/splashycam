@@ -32,9 +32,9 @@ Describe it this way in anything you publish.
 - **Record** — full-screen camera with a camcorder stamp on the preview: code, a
   live ticking time, and city. A pulsing red REC light shows while filming. No
   length limit.
-- **Dual camera** (full build only) — back camera fills the frame, front camera
-  inset top-right, recorded as one video. In Expo Go a dashed FRONT CAM box shows
-  where it will go and says it needs the full app.
+- **Dual camera** (full build only) — front camera on the top half, back camera on
+  the bottom half, recorded as one video. In Expo Go the back camera runs in the
+  bottom half, and the top half is a FRONT CAM panel saying it needs the full app.
 - **Trim** — after stopping, pick the part to keep: up to 60 s, defaulting to the
   last 60 s. Drag handles on a timeline, with undo. The cut itself happens in the
   full build; Expo Go keeps the whole recording and says so.
@@ -112,7 +112,7 @@ lib/trim.ts          trim selection logic (pure, tested); useLoopRange.ts loops 
 lib/proof.ts         frame grabs + proof card rendering
 lib/env.ts           Expo Go detection
 modules/stamp-video  native trim + stamp burn-in (untested; see its README)
-modules/dual-camera  back + front recorded as one video (untested; see its README)
+modules/dual-camera  front (top half) + back (bottom half) as one video (untested; see its README)
 later/               server code kept for later, not used by the app
 supabase/schema.sql  later: one table, two functions
 eas.json             EAS build profiles (preview = internal install, production = stores)

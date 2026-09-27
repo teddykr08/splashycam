@@ -1,4 +1,5 @@
-// dual-camera (Android): back camera full frame + front camera inset, recorded as ONE video.
+// dual-camera (Android): front camera on the top half, back camera on the bottom half,
+// recorded as ONE video.
 //
 // STATUS: written against CameraX's concurrent-camera "composition mode" (ConcurrentCamera.
 // SingleCameraConfig + CompositionSettings, read from the androidx source) and Expo's
@@ -78,7 +79,7 @@ class DualCameraView(context: Context, appContext: AppContext) : ExpoView(contex
   private val onMountError by EventDispatcher<Map<String, String>>()
 
   private val previewView = PreviewView(context).also {
-    // The composed stream (back full + front inset) is what's shown, so the preview matches
+    // The composed stream (front top half + back bottom half) is what's shown, so the preview matches
     // the recording exactly.
     it.scaleType = PreviewView.ScaleType.FILL_CENTER
     addView(it, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
@@ -120,11 +121,20 @@ class DualCameraView(context: Context, appContext: AppContext) : ExpoView(contex
         // CameraX composes them into one stream.
         val group = UseCaseGroup.Builder().addUseCase(preview).addUseCase(capture).build()
 
-        // Normalized device coordinates: origin at centre, +y up, -1..1; offset applied after
-        // scale. Back fills the frame; front is 30% wide, top-right.
-        // CHECK ON DEVICE: the front stream's aspect ratio and mirroring inside the inset.
-        val backLayout = CompositionSettings.Builder().setAlpha(1f).setOffset(0f, 0f).setScale(1f, 1f).build()
-        val frontLayout = CompositionSettings.Builder().setAlpha(1f).setOffset(0.63f, 0.6f).setScale(0.3f, 0.3f).build()
+        // Split layout (mirrors LAYOUT in ../index.ts): front on the top half, back on the
+        // bottom half. Normalized device coordinates: origin at centre, +y up, -1..1; offset
+        // is applied after scale.
+        //
+        // CHECK ON DEVICE, LIKELY NEEDS REWORK:
+        //  1. CompositionSettings can only scale and offset, not crop. Scaling a full-height
+        //     camera frame to half height (scaleY 0.5) SQUASHES it. Fixes to try: a uniform
+        //     scale (letterboxed, not squashed), or record the two cameras separately
+        //     (non-composition mode) and stack them with Media3 in the stamp-video export.
+        //  2. CameraX's docs say rotation and mirroring are applied AFTER composition, so on a
+        //     portrait phone "top half" here may come out as a left/right half. If so, swap to
+        //     setScale(0.5f, 1f) with setOffset(±0.5f, 0f).
+        val frontLayout = CompositionSettings.Builder().setAlpha(1f).setOffset(0f, 0.5f).setScale(1f, 0.5f).build()
+        val backLayout = CompositionSettings.Builder().setAlpha(1f).setOffset(0f, -0.5f).setScale(1f, 0.5f).build()
 
         p.unbindAll()
         p.bindToLifecycle(

@@ -450,3 +450,22 @@ launch, not in this environment.
   match `expo-camera`, and its API was read from the androidx main branch, not the
   1.6.0 tag. Autolinking and prebuild pass; **nothing native has been compiled.**
   Expo Go shows a labelled FRONT CAM placeholder and records the back camera only.
+
+---
+
+## 12. Split-screen dual layout
+
+- **Layout changed** from a small front inset to a split: front camera on the top half,
+  back camera on the bottom half, in the Expo Go preview and both native views.
+  Defined once per side: `LAYOUT` in `modules/dual-camera/index.ts` and `Split` in
+  the Swift file. A layout choice (inset, split, back only) is noted as a possible
+  personal setting later; it isn't built.
+- **iOS:** each camera is aspect-filled and centre-cropped into its half, so nothing
+  is stretched.
+- **Android is uncertain.** CameraX's composition can scale and offset but not crop,
+  and it rotates after composing. The halves may come out squashed, or side by side,
+  on a portrait phone. The source says so and lists the fixes to try.
+- **Unlimited recording, confirmed from source.** `expo-camera` on iOS only sets
+  `maxRecordedDuration` if `maxDuration` is passed, and we don't pass it. On Android
+  it passes 0, which CameraX documents as `DURATION_UNLIMITED`. The dual-camera
+  recorders set no limit. The practical limit is free storage.

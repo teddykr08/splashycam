@@ -47,22 +47,21 @@ function RecLight() {
 }
 
 /**
- * Where the front camera goes (top-right inset), shown when real dual recording isn't
+ * The front camera's half of the screen (top 50%), shown when real dual recording isn't
  * available: in Expo Go, or on a phone that can't run two cameras. It never pretends to be
- * a camera: it says what it is and why it's empty.
+ * a camera: it says what it is and why it's empty. `top` is where the top bar ends, so the
+ * label sits in the visible part of the half.
  */
-function FrontInsetPreview({ top, recording }: { top: number; recording: boolean }) {
-  const { width } = useWindowDimensions();
-  const w = Math.round(width * DualCamera.INSET.widthFraction);
-  const h = Math.round(w * DualCamera.INSET.aspect);
-  const m = Math.round(width * DualCamera.INSET.marginFraction);
+function FrontHalfPreview({ top, recording }: { top: number; recording: boolean }) {
+  const { height } = useWindowDimensions();
+  const half = Math.round(height * DualCamera.LAYOUT.frontFraction);
   const why = isExpoGo ? "Needs the full app" : "This phone can't run both cameras";
   return (
-    <View pointerEvents="none" style={[s.inset, { top: top + m, right: m, width: w, height: h }]}
-          accessibilityLabel={`Front camera inset. ${why}. ${recording ? "Only the back camera is recording." : ""}`}>
-      <Ionicons name="person-outline" size={26} color="#DCE6FF" />
-      <Text style={s.insetTitle}>FRONT CAM</Text>
-      <Text style={s.insetSub}>{recording ? "Not recording" : why}</Text>
+    <View pointerEvents="none" style={[s.frontHalf, { height: half, paddingTop: top }]}
+          accessibilityLabel={`Front camera, top half. ${why}. ${recording ? "Only the back camera is recording." : ""}`}>
+      <Ionicons name="person-outline" size={34} color="#DCE6FF" />
+      <Text style={s.halfTitle}>FRONT CAM</Text>
+      <Text style={s.halfSub}>{recording ? "Not recording" : why}</Text>
     </View>
   );
 }
@@ -230,16 +229,17 @@ export default function Record() {
         />
       ) : (
         <>
+          {/* Back camera: bottom half, matching the dual layout. */}
           <CameraView
             ref={cam}
-            style={StyleSheet.absoluteFill}
+            style={[s.backHalf, { height: `${(1 - DualCamera.LAYOUT.frontFraction) * 100}%` }]}
             mode="video"
             facing="back"
             videoStabilizationMode="standard"  /* smooths hand shake; won't fix a loose mount */
             onCameraReady={() => setReady(true)}
             onMountError={(e) => setCamError(e.message || "The camera couldn't be opened. Close other camera apps and try again.")}
           />
-          <FrontInsetPreview top={insets.top + space.sm + TOUCH} recording={recording} />
+          <FrontHalfPreview top={insets.top + space.sm + TOUCH} recording={recording} />
         </>
       )}
 
@@ -305,11 +305,12 @@ const s = StyleSheet.create({
   round: { width: TOUCH, height: TOUCH, borderRadius: TOUCH / 2, backgroundColor: color.scrim,
            alignItems: "center", justifyContent: "center" },
   spacer: { width: TOUCH, height: TOUCH },
-  inset: { position: "absolute", borderRadius: 14, borderWidth: 2, borderStyle: "dashed",
-           borderColor: "rgba(220,230,255,0.7)", backgroundColor: color.scrim,
-           alignItems: "center", justifyContent: "center", gap: 4, padding: 6 },
-  insetTitle: { color: "#fff", fontFamily: mono, fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
-  insetSub: { color: "#DCE6FF", fontSize: 11, fontWeight: "600", textAlign: "center" },
+  backHalf: { position: "absolute", left: 0, right: 0, bottom: 0 },
+  frontHalf: { position: "absolute", top: 0, left: 0, right: 0, backgroundColor: color.surface,
+               borderBottomWidth: 2, borderBottomColor: color.bg, borderStyle: "dashed",
+               alignItems: "center", justifyContent: "center", gap: 6 },
+  halfTitle: { color: "#fff", fontFamily: mono, fontSize: 13, fontWeight: "800", letterSpacing: 2 },
+  halfSub: { color: "#DCE6FF", fontSize: 13, fontWeight: "600", textAlign: "center" },
   roundPressed: { backgroundColor: "rgba(0,0,0,0.8)" },
   hidden: { opacity: 0 },
   recPill: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: color.scrim,

@@ -12,7 +12,7 @@ note the step number.**
 
 | | Why |
 |---|---|
-| **The front camera doesn't record** | Recording both cameras needs native code (`modules/dual-camera`). Expo Go shows a dashed **FRONT CAM** box where the front camera will be, and records the back camera only. |
+| **The front camera doesn't record** | Recording both cameras needs native code (`modules/dual-camera`). In Expo Go the top half is a **FRONT CAM** panel, and only the back camera (bottom half) records. |
 | **Trimming doesn't cut the file** | Nothing in Expo Go can cut video. You still pick the part to keep, and the preview and proof card use it, but the whole recording is saved and sent. The share screen says so. |
 | **The stamp isn't in the saved video** | Same reason: native code. The proof card carries the stamp. |
 | **Permission prompts say "Expo Go"** | Expo Go shows its own wording. |
@@ -48,8 +48,9 @@ Scan the QR code with the iPhone Camera app. If it won't connect, use
 **See:**
 - **Top left:** ✕.
 - **Top centre:** the **SPLASHY CAM** pill.
-- **Top right, just below the pill:** a dashed box reading **FRONT CAM** and "Needs
-  the full app". That's where the front camera goes in the full build.
+- **Top half:** a dark panel reading **FRONT CAM** and "Needs the full app". That's
+  where the front camera goes in the full build.
+- **Bottom half:** the live back camera.
 - **Bottom left:** the stamp. It has a code, a ticking clock, and `LOCATING…`, which
   becomes your city. The code must not move or change.
 - **Bottom:** the shutter, with **no flip button** and **no timer or "60s" anywhere**.
@@ -60,7 +61,7 @@ Scan the QR code with the iPhone Camera app. If it won't connect, use
    **See:**
    - the code stays the same;
    - a red pulsing dot with `REC 00:01` counting up;
-   - the FRONT CAM box says "Not recording".
+   - the FRONT CAM panel says "Not recording".
 2. Let it run for **about 1:30**, then tap again. **It must not stop by itself at 60
    seconds.**
 3. **See:** the trim screen.

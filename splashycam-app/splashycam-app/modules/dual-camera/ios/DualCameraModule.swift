@@ -1,4 +1,5 @@
-// dual-camera (iOS): back camera full frame + front camera inset, recorded as ONE video.
+// dual-camera (iOS): front camera on the top half, back camera on the bottom half,
+// recorded as ONE video.
 //
 // STATUS: written against Apple's documented AVFoundation APIs (AVCaptureMultiCamSession,
 // the approach of Apple's "AVMultiCamPiP" sample) and Expo's module/view API, but NEVER
@@ -7,21 +8,30 @@
 //
 // How it works:
 //  - One AVCaptureMultiCamSession with the back wide camera, the front camera and the mic.
-//  - Two preview layers wired with explicit connections: back fills the view, front is a
-//    rounded inset top-right (same place as in the Expo Go layout preview).
-//  - Recording: each back-camera frame is composited with the latest front-camera frame
-//    (Core Image) into a pixel buffer and appended to an AVAssetWriter, with the mic audio.
+//  - Two preview layers wired with explicit connections: front fills the top half, back the
+//    bottom half (the same split as the Expo Go preview in app/record.tsx).
+//  - Recording: each back-camera frame is stacked under the latest front-camera frame
+//    (Core Image, each centre-cropped to fill its half, no stretching) into a pixel buffer
+//    and appended to an AVAssetWriter, with the mic audio.
 
 import AVFoundation
 import CoreImage
 import ExpoModulesCore
 import UIKit
 
-/// Inset geometry, as fractions of the output width/height. Mirrors the JS layout preview.
-internal enum Inset {
-  static let widthFraction: CGFloat = 0.30
-  static let margin: CGFloat = 0.035
-  static let cornerFraction: CGFloat = 0.12 // of inset width
+/// Split layout. Mirrors LAYOUT in ../index.ts: the front camera gets this share of the
+/// height, at the top; the back camera gets the rest, at the bottom.
+internal enum Split {
+  static let frontFraction: CGFloat = 0.5
+}
+
+/// Scale `image` to fill `rect` (aspect-fill, centred) and crop it to `rect`.
+internal func fill(_ image: CIImage, into rect: CGRect) -> CIImage {
+  let scale = max(rect.width / image.extent.width, rect.height / image.extent.height)
+  let scaled = image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+  let dx = rect.midX - scaled.extent.midX
+  let dy = rect.midY - scaled.extent.midY
+  return scaled.transformed(by: CGAffineTransform(translationX: dx, y: dy)).cropped(to: rect)
 }
 
 internal final class DualCameraUnsupportedException: Exception {
@@ -87,9 +97,8 @@ public final class DualCameraView: ExpoView, AVCaptureVideoDataOutputSampleBuffe
     backgroundColor = .black
     backPreview.videoGravity = .resizeAspectFill
     frontPreview.videoGravity = .resizeAspectFill
+    backPreview.masksToBounds = true
     frontPreview.masksToBounds = true
-    frontPreview.borderColor = UIColor.white.withAlphaComponent(0.9).cgColor
-    frontPreview.borderWidth = 2
     layer.addSublayer(backPreview)
     layer.addSublayer(frontPreview)
     sessionQueue.async { [weak self] in self?.configure() }
@@ -97,15 +106,10 @@ public final class DualCameraView: ExpoView, AVCaptureVideoDataOutputSampleBuffe
 
   public override func layoutSubviews() {
     super.layoutSubviews()
-    backPreview.frame = bounds
-    let w = bounds.width * Inset.widthFraction
-    let h = w * 16 / 9
-    let m = bounds.width * Inset.margin
-    // Top-right, just below the JS top bar (8 pt padding + 64 pt buttons), matching the
-    // Expo Go layout preview in app/record.tsx. On screen only; the recording uses Inset.
-    let topBar: CGFloat = 8 + 64
-    frontPreview.frame = CGRect(x: bounds.width - w - m, y: safeAreaInsets.top + topBar + m, width: w, height: h)
-    frontPreview.cornerRadius = w * Inset.cornerFraction
+    // UIKit's origin is top-left: front on the top half, back on the bottom half.
+    let frontH = (bounds.height * Split.frontFraction).rounded()
+    frontPreview.frame = CGRect(x: 0, y: 0, width: bounds.width, height: frontH)
+    backPreview.frame = CGRect(x: 0, y: frontH, width: bounds.width, height: bounds.height - frontH)
   }
 
   deinit {
@@ -275,26 +279,19 @@ public final class DualCameraView: ExpoView, AVCaptureVideoDataOutputSampleBuffe
     guard let outPx else { return }
 
     let outW = CGFloat(CVPixelBufferGetWidth(outPx)), outH = CGFloat(CVPixelBufferGetHeight(outPx))
-    let back = CIImage(cvPixelBuffer: backPx)
-    // Fill the frame with the back camera (aspect-fill).
-    let bs = max(outW / back.extent.width, outH / back.extent.height)
-    var composed = back.transformed(by: CGAffineTransform(scaleX: bs, y: bs))
-    composed = composed.transformed(by: CGAffineTransform(
-      translationX: (outW - composed.extent.width) / 2 - composed.extent.minX,
-      y: (outH - composed.extent.height) / 2 - composed.extent.minY))
+    // Core Image's origin is bottom-left: the back camera's half is y 0..backH (bottom),
+    // the front camera's half is y backH..outH (top).
+    let frontH = (outH * Split.frontFraction).rounded()
+    let backH = outH - frontH
+    let backRect = CGRect(x: 0, y: 0, width: outW, height: backH)
+    let frontRect = CGRect(x: 0, y: backH, width: outW, height: frontH)
 
+    var composed = fill(CIImage(cvPixelBuffer: backPx), into: backRect)
     if let front = latestFront {
-      let iw = outW * Inset.widthFraction, ih = iw * 16 / 9, m = outW * Inset.margin
-      let fs = max(iw / front.extent.width, ih / front.extent.height)
-      var inset = front.transformed(by: CGAffineTransform(scaleX: fs, y: fs))
-      // Core Image's origin is bottom-left, so "top-right" is high x, high y.
-      let x = outW - iw - m, y = outH - ih - m * 3
-      inset = inset.transformed(by: CGAffineTransform(
-        translationX: x - inset.extent.minX - (inset.extent.width - iw) / 2,
-        y: y - inset.extent.minY - (inset.extent.height - ih) / 2))
-        .cropped(to: CGRect(x: x, y: y, width: iw, height: ih))
-      // CHECK ON DEVICE: corners are square in the recording (rounded only on screen).
-      composed = inset.composited(over: composed)
+      composed = fill(front, into: frontRect).composited(over: composed)
+    } else {
+      // No front frame yet (first instants): black top half rather than stretched back.
+      composed = CIImage(color: .black).cropped(to: frontRect).composited(over: composed)
     }
 
     ciContext.render(composed, to: outPx)
