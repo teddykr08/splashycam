@@ -62,7 +62,9 @@ export default function Record() {
       if (!video?.uri) return;
       setBusy(true);
 
-      await MediaLibrary.saveToLibraryAsync(video.uri);
+      const lib = await MediaLibrary.requestPermissionsAsync(true); // write-only: add to camera roll
+      if (!lib.granted) throw new Error("Photo library access is needed to save the clip.");
+      await MediaLibrary.Asset.create(video.uri);
       await saveProof(fresh);          // a few bytes: code, time, city
       setBusy(false);
 
