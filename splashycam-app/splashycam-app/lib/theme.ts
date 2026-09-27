@@ -11,12 +11,13 @@ export const color = {
   line: "#1E2632",        // hairlines, outlines
   text: "#F3F6FA",
   dim: "#8C97A8",         // secondary text
-  faint: "#566173",       // placeholders, captions
-  blue: "#2E7BFF",        // THE accent
-  bluePressed: "#1F63DB",
+  faint: "#7A8699",       // captions (5.5:1 on bg, passes WCAG AA for small text)
+  blue: "#2E7BFF",        // THE accent: text, icons, outlines on dark (5.2:1 on bg)
+  blueFill: "#1F6AEF",    // same blue, one step deeper, for fills behind white text (4.8:1)
+  bluePressed: "#1857C9",
   blueSoft: "rgba(46,123,255,0.14)",
   onBlue: "#FFFFFF",
-  scrim: "rgba(0,0,0,0.58)", // behind text laid over footage
+  scrim: "rgba(0,0,0,0.68)", // behind text laid over footage
 } as const;
 
 /** Camcorder-style monospace, from the OS so nothing has to download. */

@@ -30,7 +30,7 @@ export default function StateNote({ icon, title, body, tone = "quiet", children 
 const s = StyleSheet.create({
   wrap: { alignItems: "center", gap: space.sm, paddingVertical: space.lg },
   badge: { width: 64, height: 64, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", marginBottom: space.xs },
-  badgeAccent: { backgroundColor: color.blue },
+  badgeAccent: { backgroundColor: color.blueFill },
   badgeQuiet: { borderWidth: 2, borderColor: color.line },
   title: { textAlign: "center" },
   body: { textAlign: "center", maxWidth: 340 },

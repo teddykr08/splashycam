@@ -320,3 +320,54 @@ server. That's the product decision in §5.
 **Next step when you're ready for a dev build:** ask me for
 `modules/stamp-video`. It should be built and tested on a real device before
 launch, not in this environment.
+
+---
+
+## 8. Phase 3: what was built, and what's still unproven
+
+**Checked after Phase 3:**
+
+- `npm run typecheck` is strict and clean, for both the app and the tests.
+- `npm test` passes 13 of 13. These cover code formatting and entry, pulling a
+  code out of pasted text, and shake detection against synthetic accelerometer
+  data.
+- `expo install --check` is clean.
+- `expo start` serves both the Android bundle (1,675 modules) and the iOS bundle
+  (1,549 modules). I checked each fresh bundle contains the new screens, after
+  finding a stale Metro process had been serving an old one.
+- **Rendered checks.** The home and verify screens and the proof card were
+  rendered through React Native Web in headless Chromium at 390×844, with a mock
+  Supabase server behind them. That confirmed:
+  - the real supabase-js client calls `POST /rest/v1/rpc/verify_proof` with
+    `{"p_code": …}`, which matches the SQL function;
+  - the found, no-match, network-error and not-configured states each render as
+    designed;
+  - a dropped connection shows "Couldn't check", not "No match".
+  Web rendering is close to native, but it isn't the same.
+
+| Step | What you get | Unproven until tried on a phone |
+|---|---|---|
+| 3.1 Stamp | Proof card: pick one of 4 frames (35/60/80/95% into the clip). Camcorder stamp drawn on the frame, code, filmed and registered times, and city. Rendered to a 1080×1350 PNG. | Frame grabs near the very end of a clip on Android; capture quality of `react-native-view-shot` |
+| 3.2 Shake | "TIGHTEN THE DIAL" banner and warning haptic while filming. The share screen notes if the clip was shaky. | **Thresholds.** 0.28 g on and 0.16 g off are guesses. Tune by filming with a loose and a tight mount. Constants are in `lib/shake.ts`. |
+| 3.3 Share | Clip plays on a loop; big code with Copy; camera-roll and registration status. **Send clip** opens the system share sheet (Messages, TikTok and others appear there). **Proof card** shares the PNG. **Text host** opens Messages with the code filled in. | Share-sheet behavior per app. TikTok's handling of shared `.mov` vs `.mp4` isn't verified. |
+| 3.4 Verify | Six-box code entry. Checks automatically at six characters. **Paste** finds the code inside a whole pasted message. Clear yes/no panels. Network errors are shown as such, never as "no". | Hidden-input entry on all Android keyboards |
+
+**Limits you should know about:**
+
+- **Registration happens after filming, not during.** If there's no signal, the
+  code is queued on the phone. It's retried every 20 seconds while the share
+  screen is open, and each time you return home. The server records the time it
+  *received* the code, so a clip registered two hours late shows the later time.
+  That's deliberate: a phone can't be trusted to report when it filmed.
+- **Clips and the card can't go out together.** `expo-sharing` shares one file per
+  share sheet, so the clip and the card are two taps. Sending both at once needs a
+  native share module, which means a dev build.
+- **"Text host" can't attach the video.** An `sms:` link only carries text, so it
+  sends the code; the clip goes through Send clip.
+- **Design choices:**
+  - One blue in two roles: `#2E7BFF` for blue text and icons on black (5.2:1),
+    and `#1F6AEF` for fills behind white text (4.8:1). Checked against WCAG AA.
+  - The caption grey was raised from 3.2:1 to 5.5:1 for outdoor legibility.
+  - There's no red anywhere. Recording is a blue dot plus "REC". A "no" result is
+    a white outline with an ✕. This follows your "nothing else competing" rule;
+    if testers miss a red REC light, that's the first thing to revisit.

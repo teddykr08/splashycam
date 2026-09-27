@@ -29,7 +29,7 @@ export default function Button({ label, onPress, variant = "primary", icon, load
       style={({ pressed }) => [
         s.base,
         big && s.big,
-        variant === "primary" && { backgroundColor: pressed ? color.bluePressed : color.blue },
+        variant === "primary" && { backgroundColor: pressed ? color.bluePressed : color.blueFill },
         variant === "secondary" && { backgroundColor: pressed ? color.surfaceHi : color.surface, borderColor: color.line, borderWidth: 1 },
         variant === "ghost" && { backgroundColor: pressed ? color.blueSoft : "transparent" },
         inactive && !loading && s.disabled,
