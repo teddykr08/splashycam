@@ -166,9 +166,9 @@ function ClipReady({ clip }: { clip: Clip }) {
         </View>
 
         {shareBlocked ? (
-          <View style={s.shakyNote} accessibilityRole="alert">
+          <View style={s.note} accessibilityRole="alert">
             <Ionicons name="alert-circle-outline" size={22} color={color.blue} />
-            <Text style={s.shakyText}>Sharing isn't available on this device. The clip is in your camera roll if it saved.</Text>
+            <Text style={s.noteText}>Sharing isn't available on this device. The clip is in your camera roll if it saved.</Text>
           </View>
         ) : null}
 
@@ -187,13 +187,6 @@ function ClipReady({ clip }: { clip: Clip }) {
             <Text style={s.linkText}>{copied ? "Copied" : "Copy"}</Text>
           </Pressable>
         </View>
-
-        {clip.shaky ? (
-          <View style={s.shakyNote} accessibilityRole="alert">
-            <Ionicons name="warning-outline" size={22} color={color.blue} />
-            <Text style={s.shakyText}>The mount was rattling during this clip. Tighten the dial before the next one.</Text>
-          </View>
-        ) : null}
 
         <View style={s.statusCard}>
           {burn.state !== "unavailable" ? (
@@ -291,9 +284,9 @@ const s = StyleSheet.create({
           alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 6, paddingHorizontal: space.md },
   pressed: { backgroundColor: color.blueSoft },
   linkText: { color: color.blue, fontWeight: "800", fontSize: 16 },
-  shakyNote: { flexDirection: "row", gap: space.sm, alignItems: "center", backgroundColor: color.blueSoft,
+  note: { flexDirection: "row", gap: space.sm, alignItems: "center", backgroundColor: color.blueSoft,
                borderRadius: radius.md, padding: space.md },
-  shakyText: { ...type.body, color: color.text, flex: 1, fontSize: 15 },
+  noteText: { ...type.body, color: color.text, flex: 1, fontSize: 15 },
   statusCard: { backgroundColor: color.surface, borderRadius: radius.md, borderWidth: 1, borderColor: color.line },
   statusRow: { flexDirection: "row", alignItems: "center", gap: space.sm, padding: space.md, minHeight: TOUCH },
   statusIcon: { width: 28, alignItems: "center" },

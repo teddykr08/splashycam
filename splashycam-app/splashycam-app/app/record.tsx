@@ -13,7 +13,6 @@ import Wordmark from "../components/Wordmark";
 import { generateCode, stampDuration, type ProofRecord } from "../lib/stamp";
 import { setLastClip } from "../lib/session";
 import { settingsAppName } from "../lib/env";
-import { useShake } from "../lib/useShake";
 import { color, mono, radius, space, TOUCH } from "../lib/theme";
 
 const MAX_SECONDS = 60;       // behaviour only; not shown until the last few seconds
@@ -65,15 +64,6 @@ export default function Record() {
     code: generateCode(), createdAt: new Date().toISOString(), place: null,
   }));
   const now = useClock(true);
-
-  // Shake warning: only while filming, when a loose mount actually ruins the shot.
-  const shake = useShake(recording);
-  const everShaky = useRef(false);
-  useEffect(() => {
-    if (!shake.shaky) return;
-    everShaky.current = true;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-  }, [shake.shaky]);
 
   // City-level location only. Never the street address. Asked only after camera + mic are
   // granted, so the iOS location prompt doesn't land on top of the camera-permission screen.
@@ -152,7 +142,6 @@ export default function Record() {
     // Only the start time is fresh. A new code is made after the clip is handed off.
     const fresh: ProofRecord = { code: rec.code, createdAt: new Date().toISOString(), place };
     const t0 = Date.now();
-    everShaky.current = false;
     setRec(fresh);
     setStartedAt(t0);
     setRecording(true);
@@ -164,7 +153,7 @@ export default function Record() {
         Alert.alert("No clip", "The camera stopped without giving back a video file. Try again.");
         return;
       }
-      setLastClip({ uri: video.uri, rec: fresh, durationMs: Date.now() - t0, shaky: everShaky.current });
+      setLastClip({ uri: video.uri, rec: fresh, durationMs: Date.now() - t0 });
       router.push("/clip");
       // Next clip gets a new code. This happens while the share screen covers the camera.
       setRec({ code: generateCode(), createdAt: new Date().toISOString(), place: null });
@@ -182,7 +171,7 @@ export default function Record() {
 
   // One line under the shutter, fixed height. Most important message wins.
   const hint = !ready ? (slowStart ? "Camera is slow to start. Close and reopen if it stays black." : "Starting camera…")
-    : recording ? (!shake.available ? "Tap to stop · shake check unavailable" : "Tap to stop")
+    : recording ? "Tap to stop"
     : loc === "off" ? "Tap to film · location is off, so no city"
     : "Tap to film";
 
@@ -226,18 +215,6 @@ export default function Record() {
           <Text style={s.countdown}>{remaining}s</Text>
         </View>
       </View>
-
-      {recording && shake.shaky ? (
-        <View style={[s.shakeWrap, { top: insets.top + space.sm + TOUCH + space.md }]} pointerEvents="none">
-          <View style={s.shakeBanner} accessibilityRole="alert" accessibilityLiveRegion="assertive">
-            <Ionicons name="warning" size={28} color={color.onBlue} />
-            <View>
-              <Text style={s.shakeTitle}>TIGHTEN THE DIAL</Text>
-              <Text style={s.shakeSub}>The mount is rattling. This shot will be shaky.</Text>
-            </View>
-          </View>
-        </View>
-      ) : null}
 
       {/* Pinned: fixed distance above a fixed-height control area. Nothing below can push it. */}
       <StampOverlay rec={shown} at={now}
@@ -292,12 +269,6 @@ const s = StyleSheet.create({
              paddingHorizontal: 14, height: 40, borderRadius: radius.pill },
   recDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: color.rec },
   recText: { color: "#fff", fontFamily: mono, fontSize: 16, fontWeight: "700", fontVariant: ["tabular-nums"], letterSpacing: 1 },
-  shakeWrap: { position: "absolute", left: space.md, right: space.md, alignItems: "center" },
-  shakeBanner: { flexDirection: "row", alignItems: "center", gap: space.sm, backgroundColor: color.blueFill,
-                 paddingHorizontal: space.md, paddingVertical: 12, borderRadius: radius.md,
-                 shadowColor: "#000", shadowOpacity: 0.5, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
-  shakeTitle: { color: color.onBlue, fontSize: 20, fontWeight: "900", letterSpacing: 1 },
-  shakeSub: { color: color.onBlue, fontSize: 13, fontWeight: "600" },
   bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: space.md, gap: space.sm },
   stamp: { position: "absolute", left: space.md },
   controlRow: { height: SHUTTER, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
