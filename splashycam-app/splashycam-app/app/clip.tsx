@@ -17,6 +17,7 @@ import { registerProof } from "../lib/pending";
 import { grabFrame, frameTimes, renderProofCard } from "../lib/proof";
 import { stampTime } from "../lib/stamp";
 import { settingsAppName } from "../lib/env";
+import * as StampVideo from "../modules/stamp-video";
 import type { SaveResult } from "../lib/supabase";
 import { color, radius, space, type, TOUCH } from "../lib/theme";
 
@@ -61,6 +62,10 @@ function ClipReady({ clip }: { clip: Clip }) {
   const player = useVideoPlayer(clip.uri, (p) => { p.loop = true; p.muted = true; p.play(); });
 
   const [roll, setRoll] = useState<Step<true>>({ state: "working" });
+  // Burn-in only exists in a native build that includes modules/stamp-video. In Expo Go
+  // it's absent and the proof card carries the stamp instead.
+  const [burn, setBurn] = useState<Step<string> | { state: "unavailable" }>(
+    StampVideo.isAvailable ? { state: "working" } : { state: "unavailable" });
   const [reg, setReg] = useState<Step<SaveResult>>({ state: "working" });
   const [frames, setFrames] = useState<(string | null)[] | null>(null);
   const [pick, setPick] = useState(2);
@@ -84,10 +89,24 @@ function ClipReady({ clip }: { clip: Clip }) {
   useEffect(() => {
     let live = true;
     (async () => {
+      let keep = clip.uri;
+      if (StampVideo.isAvailable) {
+        try {
+          keep = await StampVideo.burnStamp(clip.uri, {
+            code: clip.rec.code,
+            startEpochMs: new Date(clip.rec.createdAt).getTime(),
+            place: clip.rec.place,
+          });
+          if (live) { setBurn({ state: "done", value: keep }); player.replace(keep); }
+        } catch (e) {
+          keep = clip.uri;
+          if (live) setBurn({ state: "failed", why: e instanceof Error ? e.message : "Stamping failed." });
+        }
+      }
       try {
         const perm = await MediaLibrary.requestPermissionsAsync(true); // write-only: add, never read
         if (!perm.granted) throw new Error(`Photos access is off. In Settings, open ${settingsAppName} and allow adding photos.`);
-        await MediaLibrary.Asset.create(clip.uri);
+        await MediaLibrary.Asset.create(keep);
         if (live) setRoll({ state: "done", value: true });
       } catch (e) {
         if (live) setRoll({ state: "failed", why: e instanceof Error ? e.message : "Couldn't save." });
@@ -96,7 +115,7 @@ function ClipReady({ clip }: { clip: Clip }) {
     register();
     Promise.all(frameTimes(clip.durationMs).map((t) => grabFrame(clip.uri, t))).then((f) => live && setFrames(f));
     return () => { live = false; };
-  }, [clip, register]);
+  }, [clip, register, player]);
 
   // No signal at the game? Keep trying quietly while this screen is open.
   const offline = reg.state === "done" && !reg.value.ok && reg.value.reason === "offline";
@@ -109,10 +128,13 @@ function ClipReady({ clip }: { clip: Clip }) {
   const registeredAt = reg.state === "done" && reg.value.ok ? reg.value.createdAt : null;
   const frameUri = frames?.[pick] ?? frames?.find((f) => f) ?? null;
 
+  const sendUri = burn.state === "done" ? burn.value : clip.uri;
+  const stamped = burn.state === "done";
+
   async function shareClip() {
     setSharing("clip");
     try {
-      await Sharing.shareAsync(clip.uri, { ...videoShareType(clip.uri), dialogTitle: "Send clip" });
+      await Sharing.shareAsync(sendUri, { ...videoShareType(sendUri), dialogTitle: "Send clip" });
     } catch {
       Alert.alert("Couldn't open sharing", "The clip is in your camera roll if it saved. Send it from there.");
     } finally {
@@ -191,6 +213,16 @@ function ClipReady({ clip }: { clip: Clip }) {
         ) : null}
 
         <View style={s.statusCard}>
+          {burn.state !== "unavailable" ? (
+            <>
+              <StatusRow
+                icon={burn.state === "done" ? "checkmark-circle" : burn.state === "failed" ? "close-circle-outline" : null}
+                title={burn.state === "working" ? "Stamping the video…" : burn.state === "done" ? "Stamp burned into the video" : "Couldn't stamp the video"}
+                detail={burn.state === "failed" ? "Sending the original clip. Send the proof card with it." : undefined}
+              />
+              <View style={s.divider} />
+            </>
+          ) : null}
           <StatusRow
             icon={roll.state === "done" ? "checkmark-circle" : roll.state === "failed" ? "close-circle-outline" : null}
             title={roll.state === "working" ? "Saving to camera roll…" : roll.state === "done" ? "Saved to camera roll" : "Not saved to camera roll"}
@@ -202,7 +234,9 @@ function ClipReady({ clip }: { clip: Clip }) {
 
         <Text style={[type.label, s.section]}>PROOF CARD</Text>
         <Text style={[type.body, s.lead]}>
-          The stamp isn't inside the video file yet. Send this card with the clip so the host sees the code on the footage.
+          {stamped
+            ? "The stamp is in the video. The card is optional: a still with the code in large type."
+            : "The stamp isn't inside the video file in this build. Send this card with the clip so the host sees the code on the footage."}
         </Text>
         <View style={s.cardWrap}>
           <ProofCard ref={card} rec={clip.rec} frameUri={frameUri} registeredAt={registeredAt}
@@ -232,7 +266,7 @@ function ClipReady({ clip }: { clip: Clip }) {
 
       <View style={[s.actions, { paddingBottom: insets.bottom + space.sm }]}>
         <Button big label="Send clip" icon="paper-plane" onPress={shareClip}
-                loading={sharing === "clip"} disabled={!!sharing || shareBlocked} />
+                loading={sharing === "clip" || burn.state === "working"} disabled={!!sharing || shareBlocked || burn.state === "working"} />
         <View style={s.actionRow}>
           <Button label="Proof card" icon="image-outline" variant="secondary" style={s.flex} onPress={shareCard}
                   loading={sharing === "card"} disabled={!!sharing || shareBlocked || (!!frameUri && !frameLoaded)} />

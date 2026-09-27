@@ -1,0 +1,25 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.stampvideo'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.stampvideo"
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+  }
+}
+
+dependencies {
+  // MUST match the Media3 version expo-video uses (node_modules/expo-video/android/build.gradle,
+  // `androidxMedia3Version`, 1.9.0 in SDK 57). Media3 modules of different versions in
+  // one app are not supported. Re-check this after every Expo SDK upgrade.
+  def media3Version = "1.9.0"
+  implementation "androidx.media3:media3-transformer:${media3Version}"
+  implementation "androidx.media3:media3-effect:${media3Version}"
+  implementation "androidx.media3:media3-common:${media3Version}"
+}
