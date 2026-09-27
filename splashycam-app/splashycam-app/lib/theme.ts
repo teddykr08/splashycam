@@ -18,6 +18,9 @@ export const color = {
   blueSoft: "rgba(46,123,255,0.14)",
   onBlue: "#FFFFFF",
   scrim: "rgba(0,0,0,0.68)", // behind text laid over footage
+  /** The ONE exception to black-and-blue: the recording light. Red REC is a convention
+   *  people learned from every camera; without it, "is this even recording?" */
+  rec: "#FF3B30",
 } as const;
 
 /** Camcorder-style monospace, from the OS so nothing has to download. */

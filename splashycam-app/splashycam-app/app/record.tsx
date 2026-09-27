@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, StyleSheet, ActivityIndicator, Linking, Alert } from "react-native";
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, Linking, Alert, Animated, Easing } from "react-native";
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import * as Location from "expo-location";
 import * as Haptics from "expo-haptics";
@@ -25,6 +25,20 @@ function useClock(on: boolean) {
     return () => clearInterval(id);
   }, [on]);
   return now;
+}
+
+/** Small red recording light that pulses while recording. */
+function RecLight() {
+  const pulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(pulse, { toValue: 0.25, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(pulse, { toValue: 1, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+  return <Animated.View style={[s.recDot, { opacity: pulse }]} />;
 }
 
 export default function Record() {
@@ -154,7 +168,7 @@ export default function Record() {
 
         {recording ? (
           <View style={s.recPill} accessibilityLabel={`Recording, ${stampDuration(elapsed)}`}>
-            <View style={s.recDot} />
+            <RecLight />
             <Text style={s.recText}>REC {stampDuration(elapsed)}</Text>
           </View>
         ) : null}
@@ -213,7 +227,7 @@ const s = StyleSheet.create({
   limit: { color: "#DCE6FF", fontFamily: mono, fontSize: 13, fontWeight: "700" },
   recPill: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: color.scrim,
              paddingHorizontal: 14, height: 40, borderRadius: radius.pill },
-  recDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: color.blue },
+  recDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: color.rec },
   recText: { color: "#fff", fontFamily: mono, fontSize: 16, fontWeight: "700", fontVariant: ["tabular-nums"], letterSpacing: 1 },
   shakeWrap: { position: "absolute", left: space.md, right: space.md, alignItems: "center" },
   shakeBanner: { flexDirection: "row", alignItems: "center", gap: space.sm, backgroundColor: color.blueFill,
