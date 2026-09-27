@@ -38,7 +38,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Splashy Cam stamps the city (never your exact address) on a clip so hosts can verify it.",
+          "locationWhenInUsePermission": "Splashy Cam adds your city (never your exact address) to each clip's timestamped proof.",
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false
         }

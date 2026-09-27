@@ -154,14 +154,15 @@ function Result({ state, code, onRetry }: { state: State; code: string; onRetry:
       return (
         <View style={[s.panel, s.panelYes]} accessibilityLiveRegion="polite" accessibilityRole="summary">
           <View style={s.yesBadge}><Ionicons name="checkmark" size={44} color={color.blueFill} /></View>
-          <Text style={s.yesTitle}>REAL CLIP</Text>
+          <Text style={s.yesTitle}>REGISTERED</Text>
           <Text style={s.yesCode}>{formatCode(p.code)}</Text>
           <View style={s.facts}>
             <Fact k="REGISTERED" v={`${stampTime(new Date(p.createdAt))}`} sub={ago(p.createdAt)} />
             <Fact k="NEAR" v={p.place ? p.place.toUpperCase() : "NO LOCATION"} />
           </View>
           <Text style={s.yesNote}>
-            Splashy Cam registered this code at that time. Check the same code is on the clip or proof card you were sent.
+            This code was registered at that time. That shows when the clip was registered, not that the footage
+            is original: make sure the same code is on the clip or proof card you were sent.
           </Text>
         </View>
       );
@@ -170,7 +171,7 @@ function Result({ state, code, onRetry }: { state: State; code: string; onRetry:
       return (
         <View style={[s.panel, s.panelNo]} accessibilityLiveRegion="polite" accessibilityRole="summary">
           <View style={s.noBadge}><Ionicons name="close" size={44} color={color.text} /></View>
-          <Text style={s.noTitle}>NO MATCH</Text>
+          <Text style={s.noTitle}>NOT FOUND</Text>
           <Text style={s.noCode}>{formatCode(code)}</Text>
           <Text style={[type.body, s.center]}>
             No clip was registered with this code. Check it for typos. If the player filmed with no signal,

@@ -33,7 +33,7 @@ function videoShareType(uri: string) {
 
 /** Opens Messages with the code typed in. Messages can't take a video attachment by URL. */
 function textHost(code: string) {
-  const body = encodeURIComponent(`Splashy Cam proof: ${code}. Check it in Splashy Cam → Verify a clip.`);
+  const body = encodeURIComponent(`Splashy Cam proof: ${code}. Check it in Splashy Cam → Check a code.`);
   // iOS wants "sms:&body=", Android "sms:?body=".
   Linking.openURL(`sms:${Platform.OS === "ios" ? "&" : "?"}body=${body}`).catch(() =>
     Alert.alert("Couldn't open Messages", `Send the code yourself: ${code}`));
@@ -302,7 +302,7 @@ function RegistrationRow({ reg, onRetry }: { reg: Step<SaveResult>; onRetry: () 
   const r = reg.value;
   if (r.ok) {
     return <StatusRow icon="checkmark-circle" title="Code registered"
-      detail={`Server time ${stampTime(new Date(r.createdAt))}. Your host can verify it now.`} />;
+      detail={`Server time ${stampTime(new Date(r.createdAt))}. Your host can look it up now.`} />;
   }
   const retry = (
     <Pressable onPress={onRetry} accessibilityRole="button" accessibilityLabel="Retry registration"
@@ -313,7 +313,7 @@ function RegistrationRow({ reg, onRetry }: { reg: Step<SaveResult>; onRetry: () 
   switch (r.reason) {
     case "offline":
       return <StatusRow icon="cloud-offline-outline" title="Waiting for signal"
-        detail="The code is saved on your phone and registers when you're back online. The host can't verify it until then."
+        detail="The code is saved on your phone and registers when you're back online. The host can't look it up until then."
         action={retry} />;
     case "unconfigured":
       return <StatusRow icon="close-circle-outline" title="Not connected to a server"

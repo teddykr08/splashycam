@@ -368,6 +368,30 @@ launch, not in this environment.
   - One blue in two roles: `#2E7BFF` for blue text and icons on black (5.2:1),
     and `#1F6AEF` for fills behind white text (4.8:1). Checked against WCAG AA.
   - The caption grey was raised from 3.2:1 to 5.5:1 for outdoor legibility.
-  - There's no red anywhere. Recording is a blue dot plus "REC". A "no" result is
-    a white outline with an ✕. This follows your "nothing else competing" rule;
-    if testers miss a red REC light, that's the first thing to revisit.
+  - Originally there was no red anywhere. **Later overruled:** a small pulsing red
+    REC light now shows while recording, because people read red as "this is
+    recording". It's the only non-blue color. A "not found" result is still a
+    white outline with an ✕.
+
+---
+
+## 9. Follow-up: Expo Go path, native module prep, wording
+
+- **Wording.** Codes are described as **timestamped proof**, never as unfakeable. A
+  found code now reads "REGISTERED", not "REAL CLIP", and says it shows when the
+  clip was registered, not that the footage is original. "Verify a clip" is now
+  "Check a code".
+- **Expo Go.** Every package the app uses is marked available in Expo Go in
+  Expo's v57 docs, except `expo-haptics`, whose page doesn't list it.
+  `expo-haptics` loads through `requireOptionalNativeModule`, so if it's missing
+  it does nothing rather than crash. Expo's docs also say iOS silences the Taptic
+  Engine while the camera is active, so haptics during recording never fire on an
+  iPhone. That's an iOS rule, not a bug, and the shake warning relies on the
+  banner. Each failure path now shows a message instead of failing silently; see
+  TESTING.md.
+- **Native burn-in.** Prepared in `modules/stamp-video/`, never compiled. On iOS
+  it uses Core Image through `AVMutableVideoComposition`'s filter handler rather
+  than the `CATextLayer` approach named in §7. Both are first-party; Core Image
+  avoids manual orientation math. On Android, Media3 is pinned to 1.9.0 to match
+  expo-video. The app uses it only if the native module is present, and falls
+  back to the proof card on any failure.

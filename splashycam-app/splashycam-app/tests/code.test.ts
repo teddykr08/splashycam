@@ -43,7 +43,7 @@ test("stampDuration", () => {
 });
 
 test("extractCode pulls the code out of a pasted message", () => {
-  assert.equal(extractCode("Splashy Cam proof: HX7-42K. Check it in Splashy Cam → Verify a clip."), "HX7-42K");
+  assert.equal(extractCode("Splashy Cam proof: HX7-42K. Check it in Splashy Cam → Check a code."), "HX7-42K");
   assert.equal(extractCode("hx7-42k"), "HX7-42K");
   assert.equal(extractCode("code is hx742k thanks"), "HX7-42K");
   assert.equal(extractCode("  HXO-42K "), "HX0-42K"); // O -> 0

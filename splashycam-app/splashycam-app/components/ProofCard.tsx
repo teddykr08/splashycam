@@ -36,13 +36,13 @@ const ProofCard = forwardRef<View, Props>(function ProofCard({ rec, frameUri, re
       <View style={s.body}>
         <View style={s.headRow}>
           <View style={s.dot} />
-          <Text style={s.kicker}>SPLASHY CAM PROOF</Text>
+          <Text style={s.kicker}>TIMESTAMPED PROOF</Text>
         </View>
         <Text style={s.code}>{rec.code}</Text>
         <Row k="FILMED" v={stampTime(new Date(rec.createdAt))} />
         <Row k="REGISTERED" v={registeredAt ? stampTime(new Date(registeredAt)) : "NOT YET"} />
         {rec.place ? <Row k="NEAR" v={rec.place.toUpperCase()} /> : null}
-        <Text style={s.foot}>Check the code in Splashy Cam → Verify a clip</Text>
+        <Text style={s.foot}>Check the code in Splashy Cam → Check a code</Text>
       </View>
     </View>
   );

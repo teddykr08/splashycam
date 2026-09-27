@@ -3,7 +3,7 @@
 -- The app never touches the table directly. It calls two functions:
 --   register_proof(code, place) -> the server's timestamp
 --   verify_proof(code)          -> at most one row
--- so the timestamp can't be faked from the client and the table can't be listed.
+-- so the client can't set the timestamp and the table can't be listed.
 
 create table if not exists public.proofs (
   code        text primary key,

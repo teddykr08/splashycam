@@ -27,10 +27,10 @@ export default function Home() {
       <View style={s.brand}>
         <View style={s.kickerRow}>
           <View style={s.dot} />
-          <Text style={s.kicker}>SENIOR ASSASSIN PROOF</Text>
+          <Text style={s.kicker}>SENIOR ASSASSIN · TIMESTAMPED PROOF</Text>
         </View>
         <Text style={type.display}>Splashy Cam</Text>
-        <Text style={[type.body, s.tagline]}>Film the hit. Stamp it. Nobody argues.</Text>
+        <Text style={[type.body, s.tagline]}>Film the hit. Get a timestamped proof.</Text>
       </View>
 
       <View style={s.sample} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -38,7 +38,7 @@ export default function Home() {
           <View style={s.sampleGlow} />
           <StampOverlay rec={SAMPLE} scale={1.25} style={s.sampleStamp} />
         </View>
-        <Text style={s.caption}>Every clip gets a stamp like this. The code is what the host checks.</Text>
+        <Text style={s.caption}>Every clip gets a stamp like this. The host looks up the code to see when it was registered.</Text>
       </View>
 
       <View style={s.bottom}>
@@ -60,7 +60,7 @@ export default function Home() {
           </View>
         ) : null}
         <Button big label="Record an elimination" icon="videocam" onPress={() => router.push("/record")} />
-        <Button label="Verify a clip" icon="shield-checkmark-outline" variant="secondary" onPress={() => router.push("/verify")} />
+        <Button label="Check a code" icon="shield-checkmark-outline" variant="secondary" onPress={() => router.push("/verify")} />
         <Text style={s.privacy}>
           Clips stay on your phone. Only the code, the time and the city go to the server.
         </Text>
