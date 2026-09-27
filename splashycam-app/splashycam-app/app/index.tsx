@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Button from "../components/Button";
 import StampOverlay from "../components/StampOverlay";
 import { flushPending } from "../lib/pending";
+import { supabase } from "../lib/supabase";
 import { color, radius, space, type } from "../lib/theme";
 
 const SAMPLE = { code: "HX7-42K", createdAt: new Date().toISOString(), place: "Your town" };
@@ -41,6 +42,15 @@ export default function Home() {
       </View>
 
       <View style={s.bottom}>
+        {!supabase ? (
+          <View style={s.waiting} accessibilityRole="alert">
+            <Ionicons name="construct-outline" size={20} color={color.blue} />
+            <Text style={s.waitingText}>
+              Not connected to a server. Filming and proof cards work, but codes won't be registered or checkable.
+              Add the Supabase values to .env and restart the dev server.
+            </Text>
+          </View>
+        ) : null}
         {waiting > 0 ? (
           <View style={s.waiting} accessibilityRole="alert">
             <Ionicons name="cloud-offline-outline" size={20} color={color.blue} />

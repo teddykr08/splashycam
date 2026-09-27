@@ -122,7 +122,7 @@ export default function Verify() {
         <Button label="Paste" icon="clipboard-outline" variant="secondary" style={s.flex} onPress={paste} />
         <Button label="Clear" icon="close" variant="secondary" style={s.flex} onPress={clear} disabled={!code} />
       </View>
-      {pasteMiss ? <Text style={s.hint}>No code found on the clipboard. Codes look like HX7-42K.</Text> : null}
+      {pasteMiss ? <Text style={s.hint}>No code on the clipboard, or pasting wasn't allowed. Codes look like HX7-42K.</Text> : null}
 
       <Result state={state} code={code} onRetry={() => { lastChecked.current = null; check(); }} />
     </ScrollView>

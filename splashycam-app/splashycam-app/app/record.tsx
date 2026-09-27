@@ -11,6 +11,7 @@ import StateNote from "../components/StateNote";
 import Button from "../components/Button";
 import { generateCode, stampDuration, type ProofRecord } from "../lib/stamp";
 import { setLastClip } from "../lib/session";
+import { settingsAppName } from "../lib/env";
 import { useShake } from "../lib/useShake";
 import { color, mono, radius, space, TOUCH } from "../lib/theme";
 
@@ -50,6 +51,9 @@ export default function Record() {
   const [recording, setRecording] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [place, setPlace] = useState<string | null>(null);
+  const [loc, setLoc] = useState<"locating" | "ok" | "off" | "failed">("locating");
+  const [camError, setCamError] = useState<string | null>(null);
+  const [slowStart, setSlowStart] = useState(false);
   const [rec, setRec] = useState<ProofRecord>(() => ({
     code: generateCode(), createdAt: new Date().toISOString(), place: null,
   }));
@@ -68,15 +72,23 @@ export default function Record() {
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
+      if (status !== "granted") { setLoc("off"); return; }
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
       const [p] = await Location.reverseGeocodeAsync(pos.coords);
       const city = p ? [p.city, p.region].filter(Boolean).join(", ") : "";
-      if (city) setPlace(city);
-    })().catch(() => {});
+      if (city) { setPlace(city); setLoc("ok"); } else setLoc("failed");
+    })().catch(() => setLoc("failed"));
   }, []);
 
-  const shown: ProofRecord = { ...rec, place };
+  // If the preview never reports ready, say so instead of spinning forever.
+  useEffect(() => {
+    if (ready) return;
+    const id = setTimeout(() => setSlowStart(true), 8000);
+    return () => clearTimeout(id);
+  }, [ready]);
+
+  // "Locating…" is display-only; the saved record only ever gets a real city or null.
+  const shown: ProofRecord = { ...rec, place: place ?? (loc === "locating" ? "Locating…" : null) };
 
   if (!camPerm || !micPerm) {
     return <View style={[s.screen, s.center]}><ActivityIndicator color={color.dim} size="large" /></View>;
@@ -90,7 +102,7 @@ export default function Record() {
           icon="videocam-outline"
           title={blocked ? "Camera is switched off" : "Camera and mic"}
           body={blocked
-            ? "Splashy Cam can't ask again. Turn on Camera and Microphone for Splashy Cam in Settings."
+            ? `iOS won't ask again. In Settings, open ${settingsAppName} and turn on Camera and Microphone.`
             : "Splashy Cam films the hit with sound. Nothing is uploaded: the clip stays on your phone."}
         />
         <Button
@@ -104,6 +116,15 @@ export default function Record() {
           }}
         />
         <Button label="Back" variant="ghost" onPress={() => router.back()} style={s.full} />
+      </View>
+    );
+  }
+
+  if (camError) {
+    return (
+      <View style={[s.screen, s.center, { paddingBottom: insets.bottom + space.lg }]}>
+        <StateNote icon="videocam-off-outline" title="Camera didn't start" body={camError} />
+        <Button label="Back" variant="secondary" onPress={() => router.back()} style={s.full} />
       </View>
     );
   }
@@ -127,7 +148,10 @@ export default function Record() {
 
     try {
       const video = await cam.current.recordAsync({ maxDuration: MAX_SECONDS });
-      if (!video?.uri) return;
+      if (!video?.uri) {
+        Alert.alert("No clip", "The camera stopped without giving back a video file. Try again.");
+        return;
+      }
       setLastClip({ uri: video.uri, rec: fresh, durationMs: Date.now() - t0, shaky: everShaky.current });
       router.push("/clip");
     } catch {
@@ -150,7 +174,7 @@ export default function Record() {
         facing="back"
         videoStabilizationMode="standard"  /* smooths hand shake; won't fix a loose mount */
         onCameraReady={() => setReady(true)}
-        onMountError={(e) => Alert.alert("Camera unavailable", e.message)}
+        onMountError={(e) => setCamError(e.message || "The camera couldn't be opened. Close other camera apps and try again.")}
       />
 
       {/* Overlays are siblings, not children: CameraView doesn't support children. */}
@@ -205,7 +229,18 @@ export default function Record() {
               : recording ? <View style={s.stopSquare} />
               : <View style={s.recCore} />}
           </Pressable>
-          <Text style={s.hint}>{!ready ? "Starting camera…" : recording ? "Tap to stop" : "Tap to film"}</Text>
+          <Text style={s.hint}>
+            {!ready ? (slowStart ? "Camera is slow to start. Close and reopen if it stays black." : "Starting camera…")
+              : recording ? "Tap to stop" : "Tap to film"}
+          </Text>
+          {!recording && (loc === "off" || loc === "failed") ? (
+            <Text style={s.note}>
+              {loc === "off" ? "No city on the stamp: location is off." : "No city on the stamp: couldn't find one."}
+            </Text>
+          ) : null}
+          {recording && !shake.available ? (
+            <Text style={s.note}>Shake check unavailable on this phone.</Text>
+          ) : null}
         </View>
       </View>
     </View>
@@ -244,6 +279,8 @@ const s = StyleSheet.create({
   shutterPressed: { transform: [{ scale: 0.95 }] },
   recCore: { width: SHUTTER - 26, height: SHUTTER - 26, borderRadius: (SHUTTER - 26) / 2, backgroundColor: color.blue },
   stopSquare: { width: 34, height: 34, borderRadius: 8, backgroundColor: "#fff" },
+  note: { color: "#DCE6FF", fontSize: 13, fontWeight: "600", textAlign: "center", textShadowColor: "rgba(0,0,0,0.8)",
+          textShadowRadius: 3, textShadowOffset: { width: 0, height: 1 } },
   hint: { color: "#fff", fontSize: 15, fontWeight: "700", textShadowColor: "rgba(0,0,0,0.8)", textShadowRadius: 3,
           textShadowOffset: { width: 0, height: 1 } },
 });

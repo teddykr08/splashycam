@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { View, Text, ScrollView, Pressable, Image, StyleSheet, ActivityIndicator, Alert, Linking, Platform } from "react-native";
 import { router } from "expo-router";
+import { useEvent } from "expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useVideoPlayer, VideoView } from "expo-video";
 import * as MediaLibrary from "expo-media-library";
@@ -15,6 +16,7 @@ import { getLastClip, type Clip } from "../lib/session";
 import { registerProof } from "../lib/pending";
 import { grabFrame, frameTimes, renderProofCard } from "../lib/proof";
 import { stampTime } from "../lib/stamp";
+import { settingsAppName } from "../lib/env";
 import type { SaveResult } from "../lib/supabase";
 import { color, radius, space, type, TOUCH } from "../lib/theme";
 
@@ -65,6 +67,12 @@ function ClipReady({ clip }: { clip: Clip }) {
   const [frameLoaded, setFrameLoaded] = useState(false);
   const [sharing, setSharing] = useState<"card" | "clip" | null>(null);
   const [copied, setCopied] = useState(false);
+  const [canShare, setCanShare] = useState<boolean | null>(null);
+  const { status: playerStatus } = useEvent(player, "statusChange", { status: player.status });
+
+  useEffect(() => {
+    Sharing.isAvailableAsync().then(setCanShare).catch(() => setCanShare(false));
+  }, []);
 
   const register = useCallback(async () => {
     setReg({ state: "working" });
@@ -78,7 +86,7 @@ function ClipReady({ clip }: { clip: Clip }) {
     (async () => {
       try {
         const perm = await MediaLibrary.requestPermissionsAsync(true); // write-only: add, never read
-        if (!perm.granted) throw new Error("Photos access is off for Splashy Cam.");
+        if (!perm.granted) throw new Error(`Photos access is off. In Settings, open ${settingsAppName} and allow adding photos.`);
         await MediaLibrary.Asset.create(clip.uri);
         if (live) setRoll({ state: "done", value: true });
       } catch (e) {
@@ -125,18 +133,39 @@ function ClipReady({ clip }: { clip: Clip }) {
   }
 
   async function copyCode() {
-    await Clipboard.setStringAsync(clip.rec.code);
+    try {
+      await Clipboard.setStringAsync(clip.rec.code);
+    } catch {
+      Alert.alert("Couldn't copy", `Write it down instead: ${clip.rec.code}`);
+      return;
+    }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   }
+
+  const noFrames = frames !== null && frames.every((f) => !f);
+  const shareBlocked = canShare === false;
 
   return (
     <View style={s.screen}>
       <ScrollView contentContainerStyle={[s.scroll, { paddingTop: insets.top + space.sm }]}>
         <View style={s.videoBox}>
           <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls />
+          {playerStatus === "error" ? (
+            <View style={s.videoError}>
+              <Ionicons name="film-outline" size={28} color={color.dim} />
+              <Text style={s.videoErrorText}>The preview can't play here. The clip file itself is unaffected: send it below.</Text>
+            </View>
+          ) : null}
         </View>
+
+        {shareBlocked ? (
+          <View style={s.shakyNote} accessibilityRole="alert">
+            <Ionicons name="alert-circle-outline" size={22} color={color.blue} />
+            <Text style={s.shakyText}>Sharing isn't available on this device. The clip is in your camera roll if it saved.</Text>
+          </View>
+        ) : null}
 
         <View style={s.codeRow}>
           <View style={s.codeCol}>
@@ -195,15 +224,18 @@ function ClipReady({ clip }: { clip: Clip }) {
             </Pressable>
           ))}
         </View>
-        <Text style={s.caption}>Tap the frame that shows the hit.</Text>
+        <Text style={s.caption}>
+          {noFrames ? "Couldn't grab pictures from this clip. The card still carries the code and times."
+            : "Tap the frame that shows the hit."}
+        </Text>
       </ScrollView>
 
       <View style={[s.actions, { paddingBottom: insets.bottom + space.sm }]}>
         <Button big label="Send clip" icon="paper-plane" onPress={shareClip}
-                loading={sharing === "clip"} disabled={!!sharing} />
+                loading={sharing === "clip"} disabled={!!sharing || shareBlocked} />
         <View style={s.actionRow}>
           <Button label="Proof card" icon="image-outline" variant="secondary" style={s.flex} onPress={shareCard}
-                  loading={sharing === "card"} disabled={!!sharing || (!!frameUri && !frameLoaded)} />
+                  loading={sharing === "card"} disabled={!!sharing || shareBlocked || (!!frameUri && !frameLoaded)} />
           <Button label="Text host" icon="chatbubble-outline" variant="secondary" style={s.flex}
                   onPress={() => textHost(clip.rec.code)} disabled={!!sharing} />
         </View>
@@ -266,6 +298,9 @@ const s = StyleSheet.create({
   full: { alignSelf: "stretch" },
   flex: { flex: 1 },
   scroll: { paddingHorizontal: space.md, paddingBottom: space.lg, gap: space.md },
+  videoError: { ...StyleSheet.absoluteFill, alignItems: "center", justifyContent: "center", gap: space.sm,
+                padding: space.lg, backgroundColor: color.surface },
+  videoErrorText: { color: color.dim, fontSize: 14, textAlign: "center", lineHeight: 20 },
   videoBox: { height: 300, borderRadius: radius.lg, overflow: "hidden", backgroundColor: "#000" },
   codeRow: { flexDirection: "row", alignItems: "center", gap: space.md, paddingHorizontal: space.xs },
   codeCol: { flex: 1, gap: 2 },
