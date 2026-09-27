@@ -11,6 +11,7 @@ import StateNote from "../components/StateNote";
 import Button from "../components/Button";
 import { generateCode, stampDuration, type ProofRecord } from "../lib/stamp";
 import { setLastClip } from "../lib/session";
+import { useShake } from "../lib/useShake";
 import { color, mono, radius, space, TOUCH } from "../lib/theme";
 
 const MAX_SECONDS = 60;
@@ -39,6 +40,15 @@ export default function Record() {
     code: generateCode(), createdAt: new Date().toISOString(), place: null,
   }));
   const now = useClock(true);
+
+  // Shake warning: only while filming, when a loose mount actually ruins the shot.
+  const shake = useShake(recording);
+  const everShaky = useRef(false);
+  useEffect(() => {
+    if (!shake.shaky) return;
+    everShaky.current = true;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+  }, [shake.shaky]);
 
   // City-level location only. Never the street address.
   useEffect(() => {
@@ -95,6 +105,7 @@ export default function Record() {
     // Fresh code + time for every clip.
     const fresh: ProofRecord = { code: generateCode(), createdAt: new Date().toISOString(), place };
     const t0 = Date.now();
+    everShaky.current = false;
     setRec(fresh);
     setStartedAt(t0);
     setRecording(true);
@@ -103,7 +114,7 @@ export default function Record() {
     try {
       const video = await cam.current.recordAsync({ maxDuration: MAX_SECONDS });
       if (!video?.uri) return;
-      setLastClip({ uri: video.uri, rec: fresh, durationMs: Date.now() - t0, shaky: false });
+      setLastClip({ uri: video.uri, rec: fresh, durationMs: Date.now() - t0, shaky: everShaky.current });
       router.push("/clip");
     } catch {
       Alert.alert("Recording stopped", "The camera stopped before the clip was saved. Try again.");
@@ -153,6 +164,18 @@ export default function Record() {
         </View>
       </View>
 
+      {recording && shake.shaky ? (
+        <View style={[s.shakeWrap, { top: insets.top + space.sm + TOUCH + space.md }]} pointerEvents="none">
+          <View style={s.shakeBanner} accessibilityRole="alert" accessibilityLiveRegion="assertive">
+            <Ionicons name="warning" size={28} color={color.onBlue} />
+            <View>
+              <Text style={s.shakeTitle}>TIGHTEN THE DIAL</Text>
+              <Text style={s.shakeSub}>The mount is rattling. This shot will be shaky.</Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
+
       <View style={[s.bottom, { paddingBottom: insets.bottom + space.lg }]} pointerEvents="box-none">
         <StampOverlay rec={shown} at={now} style={s.stamp} />
 
@@ -192,6 +215,12 @@ const s = StyleSheet.create({
              paddingHorizontal: 14, height: 40, borderRadius: radius.pill },
   recDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: color.blue },
   recText: { color: "#fff", fontFamily: mono, fontSize: 16, fontWeight: "700", fontVariant: ["tabular-nums"], letterSpacing: 1 },
+  shakeWrap: { position: "absolute", left: space.md, right: space.md, alignItems: "center" },
+  shakeBanner: { flexDirection: "row", alignItems: "center", gap: space.sm, backgroundColor: color.blue,
+                 paddingHorizontal: space.md, paddingVertical: 12, borderRadius: radius.md,
+                 shadowColor: "#000", shadowOpacity: 0.5, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
+  shakeTitle: { color: color.onBlue, fontSize: 20, fontWeight: "900", letterSpacing: 1 },
+  shakeSub: { color: "#E6EEFF", fontSize: 13, fontWeight: "600" },
   bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: space.md, gap: space.lg },
   stamp: { marginLeft: 0 },
   controls: { alignItems: "center", gap: space.sm },

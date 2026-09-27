@@ -100,6 +100,13 @@ export default function ClipScreen() {
           The stamp isn't inside the video file yet, so send this card with the clip.
         </Text>
 
+        {clip.shaky ? (
+          <View style={s.shakyNote} accessibilityRole="alert">
+            <Ionicons name="warning-outline" size={22} color={color.blue} />
+            <Text style={s.shakyText}>The mount was rattling during this clip. Tighten the dial before the next one.</Text>
+          </View>
+        ) : null}
+
         <View style={s.cardWrap}>
           <ProofCard ref={card} rec={clip.rec} frameUri={frameUri} registeredAt={registeredAt}
                      onFrameLoad={() => setFrameLoaded(true)} />
@@ -146,6 +153,9 @@ const s = StyleSheet.create({
   full: { alignSelf: "stretch" },
   scroll: { paddingHorizontal: space.lg, paddingBottom: space.lg, gap: space.sm },
   lead: { marginBottom: space.sm },
+  shakyNote: { flexDirection: "row", gap: space.sm, alignItems: "center", backgroundColor: color.blueSoft,
+               borderRadius: radius.md, padding: space.md },
+  shakyText: { ...type.body, color: color.text, flex: 1, fontSize: 15 },
   cardWrap: { alignItems: "center" },
   pickLabel: { marginTop: space.md },
   frames: { flexDirection: "row", gap: space.sm },
