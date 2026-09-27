@@ -1,3 +1,10 @@
+-- ============================================================================
+-- LATER: NOT USED BY THE APP RIGHT NOW.
+-- The app currently has no backend: codes are generated on the phone and stay
+-- there. This schema, plus the client code in later/server/, is kept for when
+-- registering and checking codes comes back. See later/README.md.
+-- ============================================================================
+
 -- Splashy Cam: one row per stamped clip. No video, no accounts, no personal data.
 --
 -- The app never touches the table directly. It calls two functions:

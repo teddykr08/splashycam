@@ -3,14 +3,11 @@ import { View, Text, Image, StyleSheet } from "react-native";
 import StampOverlay from "./StampOverlay";
 import { stampTime, type ProofRecord } from "../lib/stamp";
 import { color, mono, radius, space } from "../lib/theme";
-import { serverEnabled } from "../lib/supabase";
 
 type Props = {
   rec: ProofRecord;
   /** A frame from the clip. */
   frameUri: string | null;
-  /** Server registration time, if registered. */
-  registeredAt: string | null;
   onFrameLoad?: () => void;
 };
 
@@ -22,7 +19,7 @@ export const CARD_H = 400; // 4:5, fits Messages and TikTok previews without cro
  * and times in large type. This image is what carries the stamp until it can be burned
  * into the video itself (see AUDIT.md §7).
  */
-const ProofCard = forwardRef<View, Props>(function ProofCard({ rec, frameUri, registeredAt, onFrameLoad }, ref) {
+const ProofCard = forwardRef<View, Props>(function ProofCard({ rec, frameUri, onFrameLoad }, ref) {
   return (
     <View ref={ref} collapsable={false} style={s.card}>
       <View style={s.frame}>
@@ -41,9 +38,8 @@ const ProofCard = forwardRef<View, Props>(function ProofCard({ rec, frameUri, re
         </View>
         <Text style={s.code}>{rec.code}</Text>
         <Row k="FILMED" v={stampTime(new Date(rec.createdAt))} />
-        {serverEnabled ? <Row k="REGISTERED" v={registeredAt ? stampTime(new Date(registeredAt)) : "NOT YET"} /> : null}
         {rec.place ? <Row k="NEAR" v={rec.place.toUpperCase()} /> : null}
-        <Text style={s.foot}>{serverEnabled ? "Check the code in Splashy Cam → Check a code" : "Filmed with Splashy Cam"}</Text>
+        <Text style={s.foot}>Filmed with Splashy Cam</Text>
       </View>
     </View>
   );

@@ -1,14 +1,16 @@
+// LATER: not a route and not imported anywhere. This was app/verify.tsx ("Check a code").
+// To bring it back, move it to app/verify.tsx and fix the import paths. See later/README.md.
 import { useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, ActivityIndicator, Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
-import Button from "../components/Button";
-import StateNote from "../components/StateNote";
-import { lookupProof, serverEnabled, type LookupResult } from "../lib/supabase";
-import { extractCode, formatCode, isCompleteCode, normalizeCode, stampTime } from "../lib/stamp";
-import { color, mono, radius, space, type, TOUCH } from "../lib/theme";
+import Button from "../../components/Button";
+import StateNote from "../../components/StateNote";
+import { lookupProof, serverEnabled, type LookupResult } from "./supabase";
+import { extractCode, formatCode, isCompleteCode, normalizeCode, stampTime } from "../../lib/stamp";
+import { color, mono, radius, space, type, TOUCH } from "../../lib/theme";
 
 type State = { status: "idle" } | { status: "loading" } | LookupResult;
 

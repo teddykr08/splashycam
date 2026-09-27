@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { View, Text, ScrollView, Pressable, Image, StyleSheet, ActivityIndicator, Alert, Linking, Platform } from "react-native";
 import { router } from "expo-router";
 import { useEvent } from "expo";
@@ -13,17 +13,12 @@ import Button from "../components/Button";
 import StateNote from "../components/StateNote";
 import ProofCard from "../components/ProofCard";
 import { getLastClip, type Clip } from "../lib/session";
-import { registerProof } from "../lib/pending";
 import { grabFrame, frameTimes, renderProofCard } from "../lib/proof";
-import { stampTime } from "../lib/stamp";
 import { settingsAppName } from "../lib/env";
 import * as StampVideo from "../modules/stamp-video";
-import { serverEnabled, type SaveResult } from "../lib/supabase";
 import { color, radius, space, type, TOUCH } from "../lib/theme";
 
 type Step<T> = { state: "working" } | { state: "done"; value: T } | { state: "failed"; why: string };
-
-const RETRY_MS = 20_000;
 
 function videoShareType(uri: string) {
   return uri.toLowerCase().endsWith(".mov")
@@ -33,9 +28,7 @@ function videoShareType(uri: string) {
 
 /** Opens Messages with the code typed in. Messages can't take a video attachment by URL. */
 function textHost(code: string) {
-  const body = encodeURIComponent(serverEnabled
-    ? `Splashy Cam proof: ${code}. Check it in Splashy Cam → Check a code.`
-    : `Splashy Cam clip, code ${code}.`);
+  const body = encodeURIComponent(`Splashy Cam clip, code ${code}.`);
   // iOS wants "sms:&body=", Android "sms:?body=".
   Linking.openURL(`sms:${Platform.OS === "ios" ? "&" : "?"}body=${body}`).catch(() =>
     Alert.alert("Couldn't open Messages", `Send the code yourself: ${code}`));
@@ -68,7 +61,6 @@ function ClipReady({ clip }: { clip: Clip }) {
   // it's absent and the proof card carries the stamp instead.
   const [burn, setBurn] = useState<Step<string> | { state: "unavailable" }>(
     StampVideo.isAvailable ? { state: "working" } : { state: "unavailable" });
-  const [reg, setReg] = useState<Step<SaveResult>>({ state: "working" });
   const [frames, setFrames] = useState<(string | null)[] | null>(null);
   const [pick, setPick] = useState(2);
   const [frameLoaded, setFrameLoaded] = useState(false);
@@ -80,14 +72,6 @@ function ClipReady({ clip }: { clip: Clip }) {
   useEffect(() => {
     Sharing.isAvailableAsync().then(setCanShare).catch(() => setCanShare(false));
   }, []);
-
-  const register = useCallback(async () => {
-    if (!serverEnabled) return; // offline mode: nothing to register with
-    setReg({ state: "working" });
-    const r = await registerProof(clip.rec);
-    setReg({ state: "done", value: r });
-    if (r.ok) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-  }, [clip]);
 
   useEffect(() => {
     let live = true;
@@ -115,20 +99,10 @@ function ClipReady({ clip }: { clip: Clip }) {
         if (live) setRoll({ state: "failed", why: e instanceof Error ? e.message : "Couldn't save." });
       }
     })();
-    register();
     Promise.all(frameTimes(clip.durationMs).map((t) => grabFrame(clip.uri, t))).then((f) => live && setFrames(f));
     return () => { live = false; };
-  }, [clip, register, player]);
+  }, [clip, player]);
 
-  // No signal at the game? Keep trying quietly while this screen is open.
-  const offline = reg.state === "done" && !reg.value.ok && reg.value.reason === "offline";
-  useEffect(() => {
-    if (!offline) return;
-    const id = setTimeout(register, RETRY_MS);
-    return () => clearTimeout(id);
-  }, [offline, register]);
-
-  const registeredAt = reg.state === "done" && reg.value.ok ? reg.value.createdAt : null;
   const frameUri = frames?.[pick] ?? frames?.find((f) => f) ?? null;
 
   const sendUri = burn.state === "done" ? burn.value : clip.uri;
@@ -231,13 +205,6 @@ function ClipReady({ clip }: { clip: Clip }) {
             title={roll.state === "working" ? "Saving to camera roll…" : roll.state === "done" ? "Saved to camera roll" : "Not saved to camera roll"}
             detail={roll.state === "failed" ? `${roll.why} Use Send clip to keep a copy.` : undefined}
           />
-          <View style={s.divider} />
-          {serverEnabled ? (
-            <RegistrationRow reg={reg} onRetry={register} />
-          ) : (
-            <StatusRow icon="information-circle-outline" title="Offline mode"
-              detail="Codes aren't registered with a server in this version. The code is on the stamp and the proof card." />
-          )}
         </View>
 
         <Text style={[type.label, s.section]}>PROOF CARD</Text>
@@ -247,7 +214,7 @@ function ClipReady({ clip }: { clip: Clip }) {
             : "The stamp isn't inside the video file in this build. Send this card with the clip so the host sees the code on the footage."}
         </Text>
         <View style={s.cardWrap}>
-          <ProofCard ref={card} rec={clip.rec} frameUri={frameUri} registeredAt={registeredAt}
+          <ProofCard ref={card} rec={clip.rec} frameUri={frameUri}
                      onFrameLoad={() => setFrameLoaded(true)} />
         </View>
         <View style={s.frames}>
@@ -303,35 +270,6 @@ function StatusRow({ icon, title, detail, action }: {
       {action}
     </View>
   );
-}
-
-function RegistrationRow({ reg, onRetry }: { reg: Step<SaveResult>; onRetry: () => void }) {
-  if (reg.state !== "done") return <StatusRow icon={null} title="Registering code…" />;
-  const r = reg.value;
-  if (r.ok) {
-    return <StatusRow icon="checkmark-circle" title="Code registered"
-      detail={`Server time ${stampTime(new Date(r.createdAt))}. Your host can look it up now.`} />;
-  }
-  const retry = (
-    <Pressable onPress={onRetry} accessibilityRole="button" accessibilityLabel="Retry registration"
-               style={({ pressed }) => [s.retry, pressed && s.pressed]}>
-      <Text style={s.linkText}>Retry</Text>
-    </Pressable>
-  );
-  switch (r.reason) {
-    case "offline":
-      return <StatusRow icon="cloud-offline-outline" title="Waiting for signal"
-        detail="The code is saved on your phone and registers when you're back online. The host can't look it up until then."
-        action={retry} />;
-    case "unconfigured":
-      return <StatusRow icon="close-circle-outline" title="Not connected to a server"
-        detail="This build has no Supabase settings, so codes can't be registered or looked up." />;
-    case "duplicate":
-      return <StatusRow icon="close-circle-outline" title="Code clash"
-        detail="Another clip already has this code. Film it again to get a new one." />;
-    default:
-      return <StatusRow icon="close-circle-outline" title="Server said no" detail="The code wasn't registered." action={retry} />;
-  }
 }
 
 const s = StyleSheet.create({

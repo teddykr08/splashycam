@@ -1,6 +1,8 @@
+// LATER: not imported by the app. Kept for when codes are registered with a server again.
+// See later/README.md.
 import "react-native-url-polyfill/auto";
 import { createClient } from "@supabase/supabase-js";
-import { normalizeCode, type ProofRecord } from "./stamp";
+import { normalizeCode, type ProofRecord } from "../../lib/stamp";
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;

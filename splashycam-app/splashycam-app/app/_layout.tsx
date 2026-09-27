@@ -18,7 +18,6 @@ export default function Layout() {
         <Stack.Screen name="index" options={{ headerShown: false, title: "Splashy Cam" }} />
         <Stack.Screen name="record" options={{ headerShown: false, title: "Record", animation: "fade" }} />
         <Stack.Screen name="clip" options={{ headerShown: false, title: "Send your clip", gestureEnabled: false }} />
-        <Stack.Screen name="verify" options={{ title: "Check a code" }} />
       </Stack>
     </>
   );

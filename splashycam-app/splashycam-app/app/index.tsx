@@ -1,27 +1,14 @@
-import { useCallback, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import Button from "../components/Button";
 import StampOverlay from "../components/StampOverlay";
-import { flushPending } from "../lib/pending";
-import { serverEnabled } from "../lib/supabase";
 import { color, radius, space, type } from "../lib/theme";
 
 const SAMPLE = { code: "HX7-42K", createdAt: new Date().toISOString(), place: "Your town" };
 
 export default function Home() {
   const insets = useSafeAreaInsets();
-  const [waiting, setWaiting] = useState(0);
-
-  // Codes filmed with no signal get another try every time you come back here.
-  useFocusEffect(useCallback(() => {
-    let live = true;
-    flushPending().then((n) => live && setWaiting(n)).catch(() => {});
-    return () => { live = false; };
-  }, []));
-
   return (
     <View style={[s.screen, { paddingTop: insets.top + space.xl, paddingBottom: insets.bottom + space.md }]}>
       <View style={s.brand}>
@@ -38,30 +25,13 @@ export default function Home() {
           <View style={s.sampleGlow} />
           <StampOverlay rec={SAMPLE} scale={1.25} style={s.sampleStamp} />
         </View>
-        <Text style={s.caption}>
-          {serverEnabled
-            ? "Every clip gets a stamp like this. The host looks up the code to see when it was registered."
-            : "Every clip gets a stamp like this, with its own code."}
-        </Text>
+        <Text style={s.caption}>Every clip gets a stamp like this, with its own code.</Text>
       </View>
 
       <View style={s.bottom}>
-        {waiting > 0 ? (
-          <View style={s.waiting} accessibilityRole="alert">
-            <Ionicons name="cloud-offline-outline" size={20} color={color.blue} />
-            <Text style={s.waitingText}>
-              {waiting === 1 ? "1 code is" : `${waiting} codes are`} waiting for signal. They register automatically.
-            </Text>
-          </View>
-        ) : null}
         <Button big label="Record an elimination" icon="videocam" onPress={() => router.push("/record")} />
-        {serverEnabled ? (
-          <Button label="Check a code" icon="shield-checkmark-outline" variant="secondary" onPress={() => router.push("/verify")} />
-        ) : null}
         <Text style={s.privacy}>
-          {serverEnabled
-            ? "Clips stay on your phone. Only the code, the time and the city go to the server."
-            : "Clips stay on your phone. Offline mode: codes aren't registered anywhere yet."}
+          Clips and codes stay on your phone. Nothing is uploaded.
         </Text>
       </View>
     </View>
@@ -83,8 +53,5 @@ const s = StyleSheet.create({
   sampleStamp: { margin: space.md },
   caption: { color: color.faint, fontSize: 13, textAlign: "center" },
   bottom: { gap: space.sm },
-  waiting: { flexDirection: "row", alignItems: "center", gap: space.sm, backgroundColor: color.blueSoft,
-             borderRadius: radius.md, padding: space.md },
-  waitingText: { color: color.text, fontSize: 14, flex: 1, lineHeight: 20 },
   privacy: { color: color.faint, fontSize: 12.5, lineHeight: 18, textAlign: "center", marginTop: space.xs },
 });

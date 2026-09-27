@@ -1,6 +1,8 @@
+// LATER: not imported by the app. Kept for when codes are registered with a server again.
+// See later/README.md.
 import { File, Paths } from "expo-file-system";
 import { saveProof, lookupProof, serverEnabled, type SaveResult } from "./supabase";
-import type { ProofRecord } from "./stamp";
+import type { ProofRecord } from "../../lib/stamp";
 
 /**
  * Codes that couldn't be registered (usually: no signal at the game). Kept in a small
