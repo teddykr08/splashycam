@@ -259,3 +259,64 @@ Addressed in Phase 3.
 safe on an existing `proofs` table. It drops the old open policies and adds the two
 functions. Until you do, the app's calls to `register_proof` and `verify_proof` will
 fail, and the app will report "error".
+
+---
+
+## 7. Burning the stamp into the video: options (Phase 3)
+
+**What's needed:** after recording, write the code, time and city into the video
+pixels. Do it on the phone, with no upload.
+
+**How I checked:** npm registry metadata (versions, publish dates, peer deps), the
+package READMEs, the Media3 source on GitHub, and web search. Pages I couldn't
+fetch through this environment's proxy are marked.
+
+| Option | What it is | Works in Expo Go? | Status (Sept 2026) | Verdict |
+|---|---|---|---|---|
+| `ffmpeg-kit-react-native` | The old standard | No | **Retired.** Binaries removed from Maven Central, CocoaPods and npm in 2025. The last npm publish, 6.0.2, was January 2025. | Dead |
+| FFmpegKit forks (e.g. `@sheehanmunim/react-native-ffmpeg` 6.0.3, July 2025) | Community republish of the same binaries | No | Single maintainer; unclear who builds and patches the binaries | Supply-chain risk for a native binary |
+| `ffmpeg-expo` 0.1.0 (July 2026) | Expo module that runs FFmpeg | No (dev build) | Its README says: *"not stable for production use yet. It is mostly a hobby project."* LGPL-only build, so no libx264, and the README doesn't say whether `drawtext` is included on iOS. | Too early |
+| `expo-video-encoder` 1.0.23 | Encodes a sequence of JPEG frames into MP4 via AVFoundation | No (dev build) | **iOS only.** Can't overlay onto an existing video: you'd decode every frame to JPEG in JS, draw on it, and re-encode. For a 60-second clip that's about 1,800 JPEGs through the JS bridge. | Wrong tool |
+| VisionCamera + Skia frame processors | Draw on camera frames live | No (dev build) | Web search results (quoting VisionCamera's docs) say Skia frame processors are **preview-only**: drawings don't appear in recorded video (issue #3142). I couldn't fetch react-native-vision-camera.com through the proxy to confirm this for v5. | Doesn't solve it |
+| **Small local Expo module, native APIs** | iOS: `AVMutableVideoComposition` + `AVVideoCompositionCoreAnimationTool` with a `CATextLayer`. Android: Media3 Transformer with `OverlayEffect` + `TextOverlay`. | No (dev build) | Both are first-party OS APIs. `androidx.media3.effect.TextOverlay` exists; I confirmed it in the Media3 `release` source (`createStaticTextOverlay`). The iOS approach is AVFoundation's standard watermarking path. Hardware encode, no FFmpeg, no licensing issues. | **Recommended real fix** |
+| Server-side render | Upload, burn in, download | Yes | Breaks your rule that video never leaves the phone | Ruled out |
+| **Proof card** (fallback) | A PNG made on the phone: a frame from the clip with the stamp drawn on it, plus the code, times and city in large type. Shared alongside the clip. | **Yes** | Uses only Expo SDK 57 packages: `expo-video-thumbnails`, `react-native-view-shot`, `expo-sharing` | **Built now** |
+
+### Recommendation
+
+The real fix is a **local Expo module**, about 150 lines of Swift plus 150 of
+Kotlin, in `modules/stamp-video/`. It would expose one function:
+`burnStamp(inputUri, lines) → outputUri`. It uses only OS video APIs, has no
+third-party binaries, and is hardware-encoded.
+
+**I did not build it in this pass.** Two reasons:
+
+1. **It can't run in Expo Go.** You'd switch to a development build
+   (`eas build --profile development`), which for iOS needs your paid Apple
+   Developer account.
+2. **I can't compile or run Swift/Kotlin here.** There's no Xcode, Android SDK or
+   device in this environment. Your rules say not to fake it. Shipping 300 lines
+   of native video code I've never compiled, as the core of the product, would be
+   faking it.
+
+**What's built instead is the proof card.** After every recording, the app:
+
+- grabs frames from the clip, biased toward the end, where the hit usually is;
+- lets the player pick one;
+- draws the camcorder stamp and the code onto it;
+- renders a 1080×1350 PNG.
+
+The share screen sends the clip and the card as two taps. `expo-sharing` shares
+one file per share sheet (its `shareAsync(url)` takes a single URL), and sharing
+both in one sheet would need a native share module. That's also a dev-build
+change.
+
+**The honest limit of the card:** it proves the code was registered at a time, and
+shows one frame. It doesn't stop someone pairing a real card with a different
+clip. Burning the stamp into every frame raises the bar, but copying a code onto
+other footage is still possible without some video-derived fingerprint on the
+server. That's the product decision in §5.
+
+**Next step when you're ready for a dev build:** ask me for
+`modules/stamp-video`. It should be built and tested on a real device before
+launch, not in this environment.
