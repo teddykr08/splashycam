@@ -15,6 +15,8 @@ import ProofCard from "../components/ProofCard";
 import Wordmark from "../components/Wordmark";
 import { getLastClip, type Clip } from "../lib/session";
 import { grabFrame, frameTimes, renderProofCard } from "../lib/proof";
+import { useLoopRange } from "../lib/useLoopRange";
+import { clock, defaultRange } from "../lib/trim";
 import { settingsAppName } from "../lib/env";
 import * as StampVideo from "../modules/stamp-video";
 import { color, radius, space, type, TOUCH } from "../lib/theme";
@@ -47,6 +49,8 @@ function ClipReady({ clip }: { clip: Clip }) {
   const insets = useSafeAreaInsets();
   const card = useRef<View>(null);
 
+  // The part chosen on the trim screen (the whole clip if it somehow wasn't set).
+  const range = clip.range ?? defaultRange(clip.durationMs);
   const player = useVideoPlayer(clip.uri, (p) => { p.loop = true; p.muted = true; p.play(); });
 
   const [roll, setRoll] = useState<Step<true>>({ state: "working" });
@@ -92,7 +96,7 @@ function ClipReady({ clip }: { clip: Clip }) {
         if (live) setRoll({ state: "failed", why: e instanceof Error ? e.message : "Couldn't save." });
       }
     })();
-    Promise.all(frameTimes(clip.durationMs).map((t) => grabFrame(clip.uri, t))).then((f) => live && setFrames(f));
+    Promise.all(frameTimes(range).map((t) => grabFrame(clip.uri, t))).then((f) => live && setFrames(f));
     return () => { live = false; };
   }, [clip, player]);
 
@@ -100,6 +104,11 @@ function ClipReady({ clip }: { clip: Clip }) {
 
   const sendUri = burn.state === "done" ? burn.value : clip.uri;
   const stamped = burn.state === "done";
+  // Until the native cut exists (Expo Go), loop only the chosen part of the full file.
+  // After a native cut the file IS the chosen part, so it just loops normally.
+  useLoopRange(player, stamped ? null : range);
+  const wholeKept = !stamped && (range.startMs > 0 || range.endMs < clip.durationMs - 250);
+  const frameAt = frameTimes(range)[pick] ?? range.startMs;
 
   async function shareClip() {
     setSharing("clip");
@@ -199,6 +208,13 @@ function ClipReady({ clip }: { clip: Clip }) {
               <View style={s.divider} />
             </>
           ) : null}
+          {wholeKept ? (
+            <>
+              <StatusRow icon="information-circle-outline" title={`Kept: ${clock(range.startMs)} – ${clock(range.endMs)}`}
+                detail="This test build can't cut video, so the whole recording is saved and sent. The preview and proof card use your selection. The full app saves only the part you picked." />
+              <View style={s.divider} />
+            </>
+          ) : null}
           <StatusRow
             icon={roll.state === "done" ? "checkmark-circle" : roll.state === "failed" ? "close-circle-outline" : null}
             title={roll.state === "working" ? "Saving to camera roll…" : roll.state === "done" ? "Saved to camera roll" : "Not saved to camera roll"}
@@ -213,7 +229,7 @@ function ClipReady({ clip }: { clip: Clip }) {
             : "The stamp isn't inside the video file in this build. Send this card with the clip so the host sees the code on the footage."}
         </Text>
         <View style={s.cardWrap}>
-          <ProofCard ref={card} rec={clip.rec} frameUri={frameUri}
+          <ProofCard ref={card} rec={clip.rec} frameUri={frameUri} frameAtMs={frameAt}
                      onFrameLoad={() => setFrameLoaded(true)} />
         </View>
         <View style={s.frames}>

@@ -2,6 +2,7 @@ import type { RefObject } from "react";
 import type { View } from "react-native";
 import * as VideoThumbnails from "expo-video-thumbnails";
 import { CARD_W, CARD_H } from "../components/ProofCard";
+import type { Range } from "./trim";
 
 /** A still from the clip. Everything stays on the phone. */
 export async function grabFrame(videoUri: string, atMs: number): Promise<string | null> {
@@ -17,9 +18,9 @@ export async function grabFrame(videoUri: string, atMs: number): Promise<string 
  * Where to take candidate frames from. People usually stop filming right after the
  * hit, so bias toward the end.
  */
-export function frameTimes(durationMs: number): number[] {
-  const d = Math.max(0, durationMs);
-  return [0.35, 0.6, 0.8, 0.95].map((f) => Math.round(d * f));
+export function frameTimes(range: Range): number[] {
+  const len = Math.max(0, range.endMs - range.startMs);
+  return [0.35, 0.6, 0.8, 0.95].map((f) => Math.round(range.startMs + len * f));
 }
 
 /**

@@ -15,8 +15,6 @@ import { setLastClip } from "../lib/session";
 import { settingsAppName } from "../lib/env";
 import { color, mono, radius, space, TOUCH } from "../lib/theme";
 
-const MAX_SECONDS = 60;       // behaviour only; not shown until the last few seconds
-const COUNTDOWN_FROM = 10;    // show "9s… 1s" only in the final 10 seconds
 const SHUTTER = 92;
 const HINT_H = 40;            // fixed-height hint area so text changes never move anything
 /** Everything below the stamp is this tall, always, so the stamp never moves. */
@@ -148,13 +146,14 @@ export default function Record() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
 
     try {
-      const video = await cam.current.recordAsync({ maxDuration: MAX_SECONDS });
+      // No length limit. The part to keep (max 60 s) is chosen on the trim screen.
+      const video = await cam.current.recordAsync();
       if (!video?.uri) {
         Alert.alert("No clip", "The camera stopped without giving back a video file. Try again.");
         return;
       }
       setLastClip({ uri: video.uri, rec: fresh, durationMs: Date.now() - t0 });
-      router.push("/clip");
+      router.push("/trim");
       // Next clip gets a new code. This happens while the share screen covers the camera.
       setRec({ code: generateCode(), createdAt: new Date().toISOString(), place: null });
     } catch {
@@ -166,8 +165,6 @@ export default function Record() {
   }
 
   const elapsed = startedAt ? now.getTime() - startedAt : 0;
-  const remaining = Math.max(0, MAX_SECONDS - Math.floor(elapsed / 1000));
-  const showCountdown = recording && remaining <= COUNTDOWN_FROM;
 
   // One line under the shutter, fixed height. Most important message wins.
   const hint = !ready ? (slowStart ? "Camera is slow to start. Close and reopen if it stays black." : "Starting camera…")
@@ -209,11 +206,8 @@ export default function Record() {
           <Wordmark onFootage />
         )}
 
-        {/* Top-right stays empty except for the final-seconds countdown. */}
-        <View style={[s.round, !showCountdown && s.hidden]} pointerEvents="none"
-              accessibilityElementsHidden={!showCountdown} accessibilityLabel={`${remaining} seconds left`}>
-          <Text style={s.countdown}>{remaining}s</Text>
-        </View>
+        {/* Top-right intentionally empty. */}
+        <View style={s.spacer} pointerEvents="none" importantForAccessibility="no-hide-descendants" />
       </View>
 
       {/* Pinned: fixed distance above a fixed-height control area. Nothing below can push it. */}
@@ -262,9 +256,9 @@ const s = StyleSheet.create({
          flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   round: { width: TOUCH, height: TOUCH, borderRadius: TOUCH / 2, backgroundColor: color.scrim,
            alignItems: "center", justifyContent: "center" },
+  spacer: { width: TOUCH, height: TOUCH },
   roundPressed: { backgroundColor: "rgba(0,0,0,0.8)" },
   hidden: { opacity: 0 },
-  countdown: { color: "#fff", fontFamily: mono, fontSize: 18, fontWeight: "800", fontVariant: ["tabular-nums"] },
   recPill: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: color.scrim,
              paddingHorizontal: 14, height: 40, borderRadius: radius.pill },
   recDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: color.rec },

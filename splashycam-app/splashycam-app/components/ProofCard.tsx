@@ -9,6 +9,8 @@ type Props = {
   rec: ProofRecord;
   /** A frame from the clip. */
   frameUri: string | null;
+  /** When the frame was taken, in ms from the start of the recording. */
+  frameAtMs?: number;
   onFrameLoad?: () => void;
 };
 
@@ -20,7 +22,8 @@ export const CARD_H = 400; // 4:5, fits Messages and TikTok previews without cro
  * and times in large type. This image is what carries the stamp until it can be burned
  * into the video itself (see AUDIT.md §7).
  */
-const ProofCard = forwardRef<View, Props>(function ProofCard({ rec, frameUri, onFrameLoad }, ref) {
+const ProofCard = forwardRef<View, Props>(function ProofCard({ rec, frameUri, frameAtMs = 0, onFrameLoad }, ref) {
+  const at = new Date(new Date(rec.createdAt).getTime() + frameAtMs);
   return (
     <View ref={ref} collapsable={false} style={s.card}>
       <View style={s.frame}>
@@ -29,7 +32,7 @@ const ProofCard = forwardRef<View, Props>(function ProofCard({ rec, frameUri, on
         ) : (
           <View style={[StyleSheet.absoluteFill, s.noFrame]} />
         )}
-        <StampOverlay rec={rec} style={s.stamp} />
+        <StampOverlay rec={rec} at={at} style={s.stamp} />
       </View>
 
       <View style={s.body}>
@@ -38,7 +41,7 @@ const ProofCard = forwardRef<View, Props>(function ProofCard({ rec, frameUri, on
           <Text style={s.kicker}>SPLASHY CAM · TIMESTAMPED PROOF</Text>
         </View>
         <Text style={s.code}>{rec.code}</Text>
-        <Row k="FILMED" v={stampTime(new Date(rec.createdAt))} />
+        <Row k="FILMED" v={stampTime(at)} />
         {rec.place ? <Row k="NEAR" v={rec.place.toUpperCase()} /> : null}
         <Text style={s.foot}>Filmed with Splashy Cam</Text>
       </View>
