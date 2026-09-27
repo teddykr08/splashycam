@@ -8,7 +8,7 @@
 import { getRandomValues } from "expo-crypto";
 import { ALPHABET, formatCode } from "./code";
 
-export { normalizeCode, formatCode, isCompleteCode, stampTime, stampDuration } from "./code";
+export { normalizeCode, formatCode, isCompleteCode, extractCode, stampTime, stampDuration } from "./code";
 
 export type ProofRecord = {
   code: string;        // display form, e.g. "HX7-42K"

@@ -1,63 +1,247 @@
-import { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, ActivityIndicator, Keyboard } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Clipboard from "expo-clipboard";
+import * as Haptics from "expo-haptics";
+import { Ionicons } from "@expo/vector-icons";
+import Button from "../components/Button";
+import StateNote from "../components/StateNote";
 import { lookupProof, type LookupResult } from "../lib/supabase";
-import { formatCode, isCompleteCode } from "../lib/stamp";
+import { extractCode, formatCode, isCompleteCode, normalizeCode, stampTime } from "../lib/stamp";
+import { color, mono, radius, space, type, TOUCH } from "../lib/theme";
 
 type State = { status: "idle" } | { status: "loading" } | LookupResult;
 
-export default function Verify() {
-  const [code, setCode] = useState("");
-  const [state, setState] = useState<State>({ status: "idle" });
+function ago(iso: string): string {
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const h = Math.round(mins / 60);
+  if (h < 48) return `${h} hr ago`;
+  return `${Math.round(h / 24)} days ago`;
+}
 
-  async function check() {
-    if (!isCompleteCode(code)) return;
-    setState({ status: "loading" });
-    setState(await lookupProof(code));
-  }
-
+/** Six boxes with a dash, drawn over one hidden input so paste, autofill and backspace just work. */
+function CodeSlots({ value, focused }: { value: string; focused: boolean }) {
+  const chars = normalizeCode(value).slice(0, 6).split("");
+  const cells = Array.from({ length: 6 }, (_, i) => chars[i] ?? "");
+  const active = Math.min(chars.length, 5);
   return (
-    <View style={s.wrap}>
-      <Text style={s.label}>Type the code shown on the clip</Text>
-      <TextInput
-        value={code}
-        onChangeText={(t) => { setCode(formatCode(t)); setState({ status: "idle" }); }}
-        placeholder="HX7-42K"
-        placeholderTextColor="#4a5a80"
-        autoCapitalize="characters"
-        autoCorrect={false}
-        maxLength={7}
-        style={s.input}
-      />
-      <Pressable style={[s.primary, !isCompleteCode(code) && s.disabled]} onPress={check} disabled={!isCompleteCode(code)}>
-        <Text style={s.primaryText}>Check it</Text>
-      </Pressable>
-
-      {state.status === "loading" && <Text style={s.note}>Checking…</Text>}
-      {state.status === "not_found" && <Text style={[s.result, s.bad]}>No clip with that code. Either it was mistyped, or the clip wasn't filmed with Splashy Cam.</Text>}
-      {state.status === "error" && <Text style={[s.result, s.bad]}>Couldn't reach the server. This says nothing about the clip. Check your connection and try again.</Text>}
-      {state.status === "unconfigured" && <Text style={[s.result, s.bad]}>This build isn't connected to the Splashy Cam server, so it can't check codes.</Text>}
-      {state.status === "found" && (
-        <View style={s.card}>
-          <Text style={[s.result, s.good]}>Real clip</Text>
-          <Text style={s.note}>Registered {new Date(state.proof.createdAt).toLocaleString()}</Text>
-          {state.proof.place ? <Text style={s.note}>Near {state.proof.place}</Text> : null}
+    <View style={s.slots} pointerEvents="none">
+      {cells.map((c, i) => (
+        <View key={i} style={s.slotGroup}>
+          {i === 3 ? <Text style={s.dash}>–</Text> : null}
+          <View style={[s.slot, c ? s.slotFilled : null, focused && i === active && chars.length < 6 && s.slotActive]}>
+            <Text style={s.slotText}>{c}</Text>
+          </View>
         </View>
-      )}
+      ))}
     </View>
   );
 }
 
+export default function Verify() {
+  const insets = useSafeAreaInsets();
+  const input = useRef<TextInput>(null);
+  const [code, setCode] = useState("");
+  const [focused, setFocused] = useState(false);
+  const [state, setState] = useState<State>({ status: "idle" });
+  const [pasteMiss, setPasteMiss] = useState(false);
+  const lastChecked = useRef<string | null>(null);
+
+  async function check(c = code) {
+    if (!isCompleteCode(c)) return;
+    Keyboard.dismiss();
+    lastChecked.current = normalizeCode(c);
+    setState({ status: "loading" });
+    const r = await lookupProof(c);
+    if (lastChecked.current !== normalizeCode(c)) return; // user typed something else meanwhile
+    setState(r);
+    Haptics.notificationAsync(
+      r.status === "found" ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning,
+    ).catch(() => {});
+  }
+
+  // Check as soon as six characters are in. No extra tap needed.
+  useEffect(() => {
+    if (isCompleteCode(code) && lastChecked.current !== normalizeCode(code)) check(code);
+  }, [code]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function edit(t: string) {
+    setPasteMiss(false);
+    const next = formatCode(t).slice(0, 7);
+    setCode(next);
+    if (!isCompleteCode(next)) { lastChecked.current = null; setState({ status: "idle" }); }
+  }
+
+  async function paste() {
+    const text = await Clipboard.getStringAsync().catch(() => "");
+    const found = extractCode(text);
+    if (found) edit(found);
+    else setPasteMiss(true);
+  }
+
+  function clear() {
+    edit("");
+    input.current?.focus();
+  }
+
+  return (
+    <ScrollView
+      style={s.screen}
+      contentContainerStyle={[s.content, { paddingBottom: insets.bottom + space.xl }]}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={type.body}>Type or paste the code from the clip or proof card.</Text>
+
+      <Pressable onPress={() => input.current?.focus()} accessibilityRole="none" style={s.entry}>
+        <CodeSlots value={code} focused={focused} />
+        <TextInput
+          ref={input}
+          value={code}
+          onChangeText={edit}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onSubmitEditing={() => check()}
+          autoFocus
+          autoCapitalize="characters"
+          autoCorrect={false}
+          spellCheck={false}
+          autoComplete="off"
+          keyboardType="default"
+          returnKeyType="search"
+          maxLength={7}
+          caretHidden
+          accessibilityLabel="Proof code"
+          accessibilityHint="Six characters, like HX7-42K"
+          style={s.hiddenInput}
+        />
+      </Pressable>
+
+      <View style={s.row}>
+        <Button label="Paste" icon="clipboard-outline" variant="secondary" style={s.flex} onPress={paste} />
+        <Button label="Clear" icon="close" variant="secondary" style={s.flex} onPress={clear} disabled={!code} />
+      </View>
+      {pasteMiss ? <Text style={s.hint}>No code found on the clipboard. Codes look like HX7-42K.</Text> : null}
+
+      <Result state={state} code={code} onRetry={() => { lastChecked.current = null; check(); }} />
+    </ScrollView>
+  );
+}
+
+function Result({ state, code, onRetry }: { state: State; code: string; onRetry: () => void }) {
+  switch (state.status) {
+    case "idle":
+      return (
+        <View style={s.idle}>
+          <Ionicons name="shield-checkmark-outline" size={22} color={color.faint} />
+          <Text style={s.idleText}>
+            {normalizeCode(code).length > 0
+              ? `${6 - Math.min(6, normalizeCode(code).length)} more to go. It checks automatically.`
+              : "Every Splashy Cam clip gets a six-character code. It checks automatically once all six are in."}
+          </Text>
+        </View>
+      );
+    case "loading":
+      return (
+        <View style={[s.panel, s.panelQuiet]} accessibilityLiveRegion="polite">
+          <ActivityIndicator color={color.blue} size="large" />
+          <Text style={[type.title, s.center]}>Checking…</Text>
+        </View>
+      );
+    case "found": {
+      const p = state.proof;
+      return (
+        <View style={[s.panel, s.panelYes]} accessibilityLiveRegion="polite" accessibilityRole="summary">
+          <View style={s.yesBadge}><Ionicons name="checkmark" size={44} color={color.blueFill} /></View>
+          <Text style={s.yesTitle}>REAL CLIP</Text>
+          <Text style={s.yesCode}>{formatCode(p.code)}</Text>
+          <View style={s.facts}>
+            <Fact k="REGISTERED" v={`${stampTime(new Date(p.createdAt))}`} sub={ago(p.createdAt)} />
+            <Fact k="NEAR" v={p.place ? p.place.toUpperCase() : "NO LOCATION"} />
+          </View>
+          <Text style={s.yesNote}>
+            Splashy Cam registered this code at that time. Check the same code is on the clip or proof card you were sent.
+          </Text>
+        </View>
+      );
+    }
+    case "not_found":
+      return (
+        <View style={[s.panel, s.panelNo]} accessibilityLiveRegion="polite" accessibilityRole="summary">
+          <View style={s.noBadge}><Ionicons name="close" size={44} color={color.text} /></View>
+          <Text style={s.noTitle}>NO MATCH</Text>
+          <Text style={s.noCode}>{formatCode(code)}</Text>
+          <Text style={[type.body, s.center]}>
+            No clip was registered with this code. Check it for typos. If the player filmed with no signal,
+            it registers once their phone is back online, so try again later.
+          </Text>
+        </View>
+      );
+    case "error":
+      return (
+        <View style={[s.panel, s.panelQuiet]}>
+          <StateNote icon="cloud-offline-outline" title="Couldn't check"
+            body="No connection to the server. This says nothing about the clip." />
+          <Button label="Try again" icon="refresh" onPress={onRetry} style={s.full} />
+        </View>
+      );
+    case "unconfigured":
+      return (
+        <View style={[s.panel, s.panelQuiet]}>
+          <StateNote icon="construct-outline" title="Not connected"
+            body="This build of Splashy Cam has no server settings, so it can't check codes." />
+        </View>
+      );
+  }
+}
+
+function Fact({ k, v, sub }: { k: string; v: string; sub?: string }) {
+  return (
+    <View style={s.fact}>
+      <Text style={s.factK}>{k}</Text>
+      <Text style={s.factV}>{v}</Text>
+      {sub ? <Text style={s.factSub}>{sub}</Text> : null}
+    </View>
+  );
+}
+
+const SLOT_W = 46;
+
 const s = StyleSheet.create({
-  wrap: { flex: 1, padding: 24, gap: 14 },
-  label: { color: "#9fb0d4", fontSize: 15 },
-  input: { backgroundColor: "#131a2e", color: "#eaf0ff", fontSize: 24, letterSpacing: 3,
-           padding: 16, borderRadius: 12, borderWidth: 1, borderColor: "#2a3552" },
-  primary: { backgroundColor: "#3d7bff", padding: 16, borderRadius: 12, alignItems: "center" },
-  disabled: { opacity: 0.4 },
-  primaryText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  card: { backgroundColor: "#131a2e", padding: 18, borderRadius: 12, gap: 6, marginTop: 8 },
-  result: { fontSize: 19, fontWeight: "700" },
-  good: { color: "#49d17f" },
-  bad: { color: "#ff8078", fontSize: 15, fontWeight: "500", lineHeight: 22 },
-  note: { color: "#9fb0d4", fontSize: 14 },
+  screen: { flex: 1, backgroundColor: color.bg },
+  content: { padding: space.lg, gap: space.md },
+  flex: { flex: 1 },
+  full: { alignSelf: "stretch" },
+  center: { textAlign: "center" },
+  row: { flexDirection: "row", gap: space.sm },
+  entry: { paddingVertical: space.sm },
+  slots: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
+  slotGroup: { flexDirection: "row", alignItems: "center" },
+  slot: { width: SLOT_W, height: 64, marginHorizontal: 3, borderRadius: radius.sm, backgroundColor: color.surface,
+          borderWidth: 2, borderColor: color.line, alignItems: "center", justifyContent: "center" },
+  slotFilled: { borderColor: color.surfaceHi, backgroundColor: color.surfaceHi },
+  slotActive: { borderColor: color.blue },
+  slotText: { fontFamily: mono, fontSize: 30, fontWeight: "700", color: color.text },
+  dash: { color: color.faint, fontSize: 28, fontFamily: mono, marginHorizontal: 4 },
+  hiddenInput: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.02, color: "transparent", fontSize: 1 },
+  hint: { color: color.dim, fontSize: 14, textAlign: "center" },
+  idle: { flexDirection: "row", gap: space.sm, alignItems: "center", paddingHorizontal: space.xs, marginTop: space.sm },
+  idleText: { color: color.faint, fontSize: 14, lineHeight: 20, flex: 1 },
+  panel: { borderRadius: radius.lg, padding: space.lg, alignItems: "center", gap: space.sm, marginTop: space.sm },
+  panelQuiet: { backgroundColor: color.surface, borderWidth: 1, borderColor: color.line, minHeight: 160, justifyContent: "center" },
+  panelYes: { backgroundColor: color.blueFill },
+  panelNo: { backgroundColor: color.surface, borderWidth: 2, borderColor: color.text },
+  yesBadge: { width: 76, height: 76, borderRadius: 38, backgroundColor: color.onBlue, alignItems: "center", justifyContent: "center" },
+  yesTitle: { color: color.onBlue, fontSize: 34, fontWeight: "900", letterSpacing: 2 },
+  yesCode: { color: color.onBlue, fontFamily: mono, fontSize: 26, fontWeight: "700", letterSpacing: 4 },
+  facts: { alignSelf: "stretch", flexDirection: "row", gap: space.sm, marginTop: space.xs },
+  fact: { flex: 1, backgroundColor: "rgba(0,0,0,0.18)", borderRadius: radius.sm, padding: space.sm, minHeight: TOUCH },
+  factK: { color: color.onBlue, fontFamily: mono, fontSize: 11, letterSpacing: 1.2 },
+  factV: { color: color.onBlue, fontFamily: mono, fontSize: 13, fontWeight: "700", marginTop: 2, fontVariant: ["tabular-nums"] },
+  factSub: { color: color.onBlue, fontSize: 12, marginTop: 2 },
+  yesNote: { color: color.onBlue, fontSize: 14, lineHeight: 20, textAlign: "center", marginTop: space.xs },
+  noBadge: { width: 76, height: 76, borderRadius: 38, borderWidth: 3, borderColor: color.text, alignItems: "center", justifyContent: "center" },
+  noTitle: { color: color.text, fontSize: 34, fontWeight: "900", letterSpacing: 2 },
+  noCode: { color: color.dim, fontFamily: mono, fontSize: 26, fontWeight: "700", letterSpacing: 4 },
 });

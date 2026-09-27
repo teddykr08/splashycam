@@ -40,3 +40,20 @@ export function stampDuration(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
   return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
 }
+
+/**
+ * Finds a proof code inside pasted text, e.g. a whole message:
+ * "Splashy Cam proof: HX7-42K. Check it in Splashy Cam". Prefers the dashed form,
+ * then a standalone 6-character code-like token. Returns the display form.
+ */
+export function extractCode(text: string): string | null {
+  const dashed = text.match(/(?:^|[^0-9A-Za-z])([0-9A-Za-z]{3})-([0-9A-Za-z]{3})(?![0-9A-Za-z])/);
+  if (dashed && isCompleteCode(dashed[1] + dashed[2])) return formatCode(dashed[1] + dashed[2]);
+  // Without the dash, ordinary words like "thanks" would pass (O->0, L->1 make most
+  // 6-letter words valid), so an undashed token needs a digit or to be all caps.
+  for (const token of text.split(/[^0-9A-Za-z]+/)) {
+    const codeLike = /[0-9]/.test(token) || token === token.toUpperCase();
+    if (token.length === 6 && codeLike && isCompleteCode(token)) return formatCode(token);
+  }
+  return null;
+}

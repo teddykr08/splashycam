@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ALPHABET, normalizeCode, formatCode, isCompleteCode, stampTime, stampDuration } from "../lib/code";
+import { ALPHABET, normalizeCode, formatCode, isCompleteCode, stampTime, stampDuration, extractCode } from "../lib/code";
 
 test("alphabet has 32 unambiguous characters", () => {
   assert.equal(ALPHABET.length, 32);
@@ -40,4 +40,22 @@ test("stampDuration", () => {
   assert.equal(stampDuration(12_900), "00:12");
   assert.equal(stampDuration(61_000), "01:01");
   assert.equal(stampDuration(-5), "00:00");
+});
+
+test("extractCode pulls the code out of a pasted message", () => {
+  assert.equal(extractCode("Splashy Cam proof: HX7-42K. Check it in Splashy Cam → Verify a clip."), "HX7-42K");
+  assert.equal(extractCode("hx7-42k"), "HX7-42K");
+  assert.equal(extractCode("code is hx742k thanks"), "HX7-42K");
+  assert.equal(extractCode("  HXO-42K "), "HX0-42K"); // O -> 0
+});
+
+test("extractCode ignores words that only look like codes", () => {
+  assert.equal(extractCode("Splashy Cam"), null);       // 'Splash' is inside a longer word
+  assert.equal(extractCode("hello there"), null);
+  assert.equal(extractCode("ABCDEFG"), null);            // 7 chars
+  assert.equal(extractCode("HX7-4UK"), null);            // U isn't valid
+  assert.equal(extractCode(""), null);
+  assert.equal(extractCode("ok thanks"), null);           // THANKS is valid alphabet-wise
+  assert.equal(extractCode("pretty normal clip"), null);  // NORMAL -> N0RMA1 would be too
+  assert.equal(extractCode("got it: HXMKQR"), "HXM-KQR"); // all-caps, no digit, still a code
 });
