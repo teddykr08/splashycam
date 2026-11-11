@@ -23,7 +23,7 @@ note the step number.**
 
 ## 0. Start it (on your computer)
 
-From `splashycam-app/splashycam-app`, run:
+From `app/`, run:
 
 ```bash
 npm install

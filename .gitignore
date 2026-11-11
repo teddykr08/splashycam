@@ -1,0 +1,8 @@
+# Repo-wide. Each project keeps its own .gitignore too (see app/.gitignore).
+node_modules/
+.DS_Store
+*.log
+.env
+.env*.local
+.vscode/
+.idea/
