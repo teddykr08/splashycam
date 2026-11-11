@@ -1,0 +1,4 @@
+# Shopify CLI environments. Use with -e, e.g. `shopify theme dev -e dev`.
+# No environment here targets the live theme. Pushing live always needs --live, on purpose.
+[environments.dev]
+store = "splashy-cam.myshopify.com"
