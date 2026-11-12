@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, type ComponentRef } from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import StampOverlay from "./StampOverlay";
@@ -22,7 +22,7 @@ export const CARD_H = 400; // 4:5, fits Messages and TikTok previews without cro
  * and times in large type. This image is what carries the stamp until it can be burned
  * into the video itself (see AUDIT.md §7).
  */
-const ProofCard = forwardRef<View, Props>(function ProofCard({ rec, frameUri, frameAtMs = 0, onFrameLoad }, ref) {
+const ProofCard = forwardRef<ComponentRef<typeof View>, Props>(function ProofCard({ rec, frameUri, frameAtMs = 0, onFrameLoad }, ref) {
   const at = new Date(new Date(rec.createdAt).getTime() + frameAtMs);
   return (
     <View ref={ref} collapsable={false} style={s.card}>

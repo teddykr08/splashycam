@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentProps, type ComponentRef, type ReactNode } from "react";
 import { View, Text, ScrollView, Pressable, Image, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { router } from "expo-router";
 import { useEvent } from "expo";
@@ -47,7 +47,7 @@ export default function ClipScreen() {
 
 function ClipReady({ clip }: { clip: Clip }) {
   const insets = useSafeAreaInsets();
-  const card = useRef<View>(null);
+  const card = useRef<ComponentRef<typeof View>>(null);
 
   // The part chosen on the trim screen (the whole clip if it somehow wasn't set).
   const range = clip.range ?? defaultRange(clip.durationMs);

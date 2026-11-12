@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import type { ComponentRef, RefObject } from "react";
 import type { View } from "react-native";
 import * as VideoThumbnails from "expo-video-thumbnails";
 import { CARD_W, CARD_H } from "../components/ProofCard";
@@ -29,7 +29,7 @@ export function frameTimes(range: Range): number[] {
  * with getEnforcing() at import time, so a build without it would otherwise crash on launch
  * instead of just failing this one feature. (It is in Expo Go per Expo's docs.)
  */
-export async function renderProofCard(card: RefObject<View | null>): Promise<string> {
+export async function renderProofCard(card: RefObject<ComponentRef<typeof View> | null>): Promise<string> {
   const { captureRef } = await import("react-native-view-shot");
   const scale = 1080 / CARD_W;
   return captureRef(card, { format: "png", result: "tmpfile", width: 1080, height: Math.round(CARD_H * scale) });

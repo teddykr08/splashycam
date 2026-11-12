@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "scheme": "splashycam",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "txt.teddy.splashycam",
@@ -52,7 +51,8 @@
         }
       ],
       "expo-asset",
-      "expo-video"
+      "expo-video",
+      "expo-font"
     ]
   }
 }

@@ -1,6 +1,6 @@
 // LATER: not a route and not imported anywhere. This was app/verify.tsx ("Check a code").
 // To bring it back, move it to app/verify.tsx and fix the import paths. See later/README.md.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentRef } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, ActivityIndicator, Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Clipboard from "expo-clipboard";
@@ -59,7 +59,7 @@ function VerifyOffline() {
 
 function VerifyOnline() {
   const insets = useSafeAreaInsets();
-  const input = useRef<TextInput>(null);
+  const input = useRef<ComponentRef<typeof TextInput>>(null);
   const [code, setCode] = useState("");
   const [focused, setFocused] = useState(false);
   const [state, setState] = useState<State>({ status: "idle" });
