@@ -6,7 +6,8 @@
  * or related systems. Please exercise caution as any changes
  * made to this file may be overwritten.
  * ------------------------------------------------------------
- */{
+ */
+{
   "sections": {
     "main": {
       "type": "product-information",
@@ -465,10 +466,90 @@
         "padding-block-start": 48,
         "padding-block-end": 48
       }
+    },
+    "ways_to_buy": {
+      "type": "splashy-options",
+      "blocks": {
+        "option_1": {
+          "type": "option",
+          "settings": {
+            "name": "School box of 5+",
+            "note": "15% off · ships the next day",
+            "price": "$17.85",
+            "highlight": true
+          }
+        },
+        "option_2": {
+          "type": "option",
+          "settings": {
+            "name": "School box of 2–4",
+            "note": "10% off · ships to your host",
+            "price": "$18.90"
+          }
+        },
+        "option_3": {
+          "type": "option",
+          "settings": {
+            "name": "Ship to me alone",
+            "note": "Ships right away",
+            "price": "$21"
+          }
+        }
+      },
+      "block_order": [
+        "option_1",
+        "option_2",
+        "option_3"
+      ],
+      "settings": {}
+    },
+    "box_faq": {
+      "type": "splashy-faq",
+      "blocks": {
+        "question_1": {
+          "type": "question",
+          "settings": {
+            "question": "What’s a school box?",
+            "answer": "<p>Everyone who orders on the same host’s link goes in one box, which ships to the host. More orders in the box means a lower price for everyone.</p>"
+          }
+        },
+        "question_2": {
+          "type": "question",
+          "settings": {
+            "question": "When does my box ship?",
+            "answer": "<p>The day after it reaches 5 orders. Otherwise at its deadline: 5 days before your game starts, or 3 days after the box opens once the game is on. Your host can also ship it early once it has 2 orders.</p>"
+          }
+        },
+        "question_3": {
+          "type": "question",
+          "settings": {
+            "question": "What if my box doesn’t fill up?",
+            "answer": "<p>Tick “ship it anyway” and it ships at the deadline even if you’re the only order, at the regular price. If you don’t tick it, your order is cancelled and you don’t pay.</p>"
+          }
+        },
+        "question_4": {
+          "type": "question",
+          "settings": {
+            "question": "Can I ship it to my house instead?",
+            "answer": "<p>Yes. Choose “ship to me alone” and it ships right away for $21, without the box discount.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "question_1",
+        "question_2",
+        "question_3",
+        "question_4"
+      ],
+      "settings": {
+        "heading": "About school boxes"
+      }
     }
   },
   "order": [
     "main",
+    "ways_to_buy",
+    "box_faq",
     "product_recommendations_qggXJq"
   ]
 }

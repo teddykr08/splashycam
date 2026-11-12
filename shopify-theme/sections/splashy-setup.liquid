@@ -1,0 +1,185 @@
+{% comment %}
+  Section contract.
+  The setup "equation": steps (Step blocks) joined by a plus sign and ending in
+  an equals sign and a result. A step can be crossed out to show it's skippable,
+  e.g. "3 sec: put it on your gun", crossed out because the mount stays on.
+  @example
+  <!-- Home page > Splashy setup equation -->
+{% endcomment %}
+
+{% render 'splashy-ui-styles' %}
+
+<div class="sc-section sc-setup">
+  <div class="sc-wrap">
+    <h2 class="sc-title sc-setup__title">{{ section.settings.heading | escape }}</h2>
+
+    <ol class="sc-setup__eq" role="list">
+      {%- for block in section.blocks -%}
+        {%- unless forloop.first -%}
+          <li class="sc-setup__op" aria-hidden="true">+</li>
+        {%- endunless -%}
+        <li
+          class="sc-card sc-setup__term{% if block.settings.crossed %} sc-setup__term--crossed{% endif %}"
+          {{ block.shopify_attributes }}
+        >
+          <span class="sc-setup__time">
+            {%- if block.settings.crossed -%}
+              <s>{{ block.settings.time | escape }}</s>
+              <span class="visually-hidden">(skip this)</span>
+            {%- else -%}
+              {{ block.settings.time | escape }}
+            {%- endif -%}
+          </span>
+          <span class="sc-setup__label">
+            {%- if block.settings.crossed -%}
+              <s>{{ block.settings.label | escape }}</s>
+            {%- else -%}
+              {{ block.settings.label | escape }}
+            {%- endif -%}
+          </span>
+          {%- if block.settings.note != blank -%}
+            <span class="sc-setup__note">{{ block.settings.note | escape }}</span>
+          {%- endif -%}
+        </li>
+      {%- endfor -%}
+      <li class="sc-setup__op" aria-hidden="true">=</li>
+      <li class="sc-card sc-setup__result">{{ section.settings.result | escape }}</li>
+    </ol>
+
+    {%- if section.settings.text != blank -%}
+      <p class="sc-text sc-setup__text">{{ section.settings.text | escape }}</p>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .sc-setup {
+    background: var(--sc-sky);
+    border-block: var(--sc-outline) solid var(--sc-ink);
+  }
+
+  .sc-setup__title,
+  .sc-setup__text {
+    text-align: center;
+  }
+
+  .sc-setup__eq {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    margin: 28px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sc-setup__term,
+  .sc-setup__result {
+    display: grid;
+    gap: 2px;
+    width: min(100%, 280px);
+    padding: 16px 20px;
+    text-align: center;
+  }
+
+  .sc-setup__time {
+    font-family: var(--sc-display);
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .sc-setup__label {
+    font-family: var(--sc-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  .sc-setup__term--crossed {
+    background: color-mix(in srgb, #fff 70%, var(--sc-sky));
+    rotate: -2deg;
+  }
+
+  .sc-setup__term--crossed s {
+    text-decoration-color: var(--sc-orange);
+    text-decoration-thickness: 4px;
+    opacity: 0.6;
+  }
+
+  .sc-setup__note {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--sc-ink);
+  }
+
+  .sc-setup__op {
+    font-family: var(--sc-display);
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .sc-setup__result {
+    background: var(--sc-orange);
+    font-family: var(--sc-display);
+    font-size: 2rem;
+    font-weight: 700;
+    rotate: 1.5deg;
+  }
+
+  .sc-setup__text {
+    max-width: 40ch;
+    margin: 28px auto 0;
+  }
+
+  @media (min-width: 750px) {
+    .sc-setup__eq {
+      grid-auto-flow: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sc-setup__term,
+    .sc-setup__result {
+      width: 220px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Splashy setup equation",
+  "class": "sc-setup-section",
+  "max_blocks": 3,
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Ready in 2 seconds" },
+    { "type": "text", "id": "result", "label": "Result", "default": "Ready!" },
+    {
+      "type": "text",
+      "id": "text",
+      "label": "Line under the equation",
+      "default": "Ships fully assembled. Tighten it on once, then just drop your phone in."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Step",
+      "settings": [
+        { "type": "text", "id": "time", "label": "Time", "default": "2 sec" },
+        { "type": "text", "id": "label", "label": "What you do", "default": "Step" },
+        { "type": "checkbox", "id": "crossed", "label": "Cross it out", "info": "For a step people can skip.", "default": false },
+        { "type": "text", "id": "note", "label": "Small note" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Splashy setup equation",
+      "blocks": [
+        { "type": "step", "settings": { "time": "3 sec", "label": "Put it on your gun", "crossed": true, "note": "Just leave it on" } },
+        { "type": "step", "settings": { "time": "2 sec", "label": "Drop your phone in" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

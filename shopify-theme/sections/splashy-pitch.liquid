@@ -1,0 +1,114 @@
+{% comment %}
+  Section contract.
+  "Run your school's game?" pitch for hosts: heading, text, a short list of perks,
+  a button and an illustration slot (or a labeled placeholder).
+  @example
+  <!-- Home page > Splashy host pitch -->
+{% endcomment %}
+
+{% render 'splashy-ui-styles' %}
+
+<div class="sc-section sc-pitch">
+  <div class="sc-wrap sc-pitch__card sc-card">
+    <div class="sc-pitch__art">
+      {%- if section.settings.image != blank -%}
+        {{
+          section.settings.image
+          | image_url: width: 800
+          | image_tag:
+            widths: '400, 600, 800',
+            sizes: '(min-width: 750px) 400px, 90vw',
+            loading: 'lazy',
+            alt: section.settings.image.alt | default: ''
+        }}
+      {%- else -%}
+        {% render 'splashy-placeholder', label: 'Host illustration', hint: 'Pick an image in this section' %}
+      {%- endif -%}
+    </div>
+
+    <div class="sc-pitch__copy">
+      <h2 class="sc-title">{{ section.settings.heading | escape }}</h2>
+      {%- if section.settings.text != blank -%}
+        <div class="sc-text">{{ section.settings.text }}</div>
+      {%- endif -%}
+      {%- if section.settings.button_label != blank and section.settings.button_link != blank -%}
+        <a class="sc-btn sc-btn--sky sc-pitch__btn" href="{{ section.settings.button_link }}">
+          {{- section.settings.button_label | escape -}}
+        </a>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .sc-pitch__card {
+    display: grid;
+    gap: 28px;
+    align-items: center;
+    padding: clamp(24px, 5vw, 48px);
+    background: var(--sc-cream);
+  }
+
+  .sc-pitch__art {
+    aspect-ratio: 1;
+    max-width: 360px;
+    width: 100%;
+    margin-inline: auto;
+  }
+
+  .sc-pitch__art img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .sc-pitch__copy {
+    min-width: 0;
+  }
+
+  .sc-pitch .sc-text ul {
+    display: grid;
+    gap: 6px;
+    margin: 16px 0 0;
+    padding-inline-start: 1.2em;
+  }
+
+  .sc-pitch .sc-text p {
+    margin: 0;
+  }
+
+  .sc-pitch__btn {
+    margin-block-start: 24px;
+  }
+
+  @media (min-width: 750px) {
+    .sc-pitch__card {
+      grid-template-columns: 2fr 3fr;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Splashy host pitch",
+  "class": "sc-pitch-section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Run your school's game?" },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>Become a host and get paid for every order on your link.</p><ul><li>10% of each order in a box of 2–4</li><li>15% once your box hits 5</li><li>5% on orders that ship alone</li><li>Optional pot for your game's winners</li></ul>"
+    },
+    { "type": "text", "id": "button_label", "label": "Button text", "default": "Become a host" },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link",
+      "info": "The button hides until a link is set (for example a contact page or form)."
+    },
+    { "type": "image_picker", "id": "image", "label": "Illustration" }
+  ],
+  "presets": [{ "name": "Splashy host pitch" }]
+}
+{% endschema %}

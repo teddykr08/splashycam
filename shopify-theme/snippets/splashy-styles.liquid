@@ -1,0 +1,58 @@
+{% doc %}
+  Splashy Cam's cartoony look: loads the display font, turns the "Splashy Cam look"
+  theme settings into --sc-* custom properties, and restyles Horizon's buttons store-wide.
+  Rendered once from layout/theme.liquid, after the Horizon style variables.
+
+  @example
+  {% render 'splashy-styles' %}
+{% enddoc %}
+
+{%- liquid
+  if settings.sc_display_font == 'baloo2'
+    assign sc_font_family = "'Baloo 2'"
+    assign sc_font_query = 'Baloo+2:wght@500;600;700;800'
+  else
+    assign sc_font_family = "'Fredoka'"
+    assign sc_font_query = 'Fredoka:wght@500;600;700'
+  endif
+-%}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ sc_font_query }}&display=swap">
+
+{% style %}
+  :root {
+    --sc-sky: {{ settings.sc_sky }};
+    --sc-orange: {{ settings.sc_orange }};
+    --sc-cream: {{ settings.sc_cream }};
+    --sc-ink: {{ settings.sc_ink }};
+    --sc-display: {{ sc_font_family }}, ui-rounded, 'Arial Rounded MT Bold', system-ui, sans-serif;
+    --sc-outline: {{ settings.sc_outline }}px;
+    --sc-radius: {{ settings.sc_radius }}px;
+    --sc-shadow: {{ settings.sc_shadow }}px;
+    --sc-lift: {% if settings.sc_bounce %}-3px{% else %}0px{% endif %};
+    --font-heading--family: var(--sc-display);
+  }
+{% endstyle %}
+
+{% stylesheet %}
+  body {
+    background-color: var(--sc-cream);
+    color: var(--sc-ink);
+  }
+
+  :is(h1, h2, h3, h4, .h1, .h2, .h3, .h4) {
+    font-family: var(--sc-display);
+  }
+
+  /* Horizon's buttons, store-wide: chunky outline, pill shape, offset shadow. */
+  :is(.button, .button-secondary):not(.button-unstyled) {
+    border: var(--sc-outline) solid var(--sc-ink);
+    border-radius: 999px;
+    box-shadow: var(--sc-shadow) var(--sc-shadow) 0 var(--sc-ink);
+    font-family: var(--sc-display);
+    font-weight: 600;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+{% endstylesheet %}

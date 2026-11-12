@@ -57,6 +57,107 @@
     ]
   },
   {
+    "name": "Splashy Cam look",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "The cartoony look used by the Splashy Cam header, footer and home sections. Buttons across the store pick it up too."
+      },
+      {
+        "type": "header",
+        "content": "Colors"
+      },
+      {
+        "type": "color",
+        "id": "sc_sky",
+        "label": "Sky blue (main)",
+        "default": "#3BB4F2"
+      },
+      {
+        "type": "color",
+        "id": "sc_orange",
+        "label": "Orange (accent)",
+        "default": "#FF8A1E"
+      },
+      {
+        "type": "color",
+        "id": "sc_cream",
+        "label": "Cream (background)",
+        "default": "#FFF5E1"
+      },
+      {
+        "type": "color",
+        "id": "sc_ink",
+        "label": "Outline and text",
+        "default": "#1D2B3A"
+      },
+      {
+        "type": "header",
+        "content": "Fonts"
+      },
+      {
+        "type": "select",
+        "id": "sc_display_font",
+        "label": "Display font (headings and buttons)",
+        "options": [
+          {
+            "value": "fredoka",
+            "label": "Fredoka"
+          },
+          {
+            "value": "baloo2",
+            "label": "Baloo 2"
+          }
+        ],
+        "default": "fredoka"
+      },
+      {
+        "type": "paragraph",
+        "content": "Body text uses the Body font under Typography."
+      },
+      {
+        "type": "header",
+        "content": "Shape"
+      },
+      {
+        "type": "range",
+        "id": "sc_outline",
+        "label": "Outline thickness",
+        "min": 1,
+        "max": 6,
+        "step": 1,
+        "unit": "px",
+        "default": 3
+      },
+      {
+        "type": "range",
+        "id": "sc_radius",
+        "label": "Corner roundness",
+        "min": 0,
+        "max": 40,
+        "step": 2,
+        "unit": "px",
+        "default": 24
+      },
+      {
+        "type": "range",
+        "id": "sc_shadow",
+        "label": "Offset shadow",
+        "min": 0,
+        "max": 12,
+        "step": 1,
+        "unit": "px",
+        "default": 5
+      },
+      {
+        "type": "checkbox",
+        "id": "sc_bounce",
+        "label": "Bounce on hover",
+        "default": true
+      }
+    ]
+  },
+  {
     "name": "t:names.colors",
     "settings": [
       {

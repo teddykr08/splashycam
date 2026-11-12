@@ -1,0 +1,221 @@
+{% comment %}
+  Section contract.
+  Home page hero: what the mount does, in one line, the Buy button and a looping,
+  muted video (or a labeled placeholder). Prices live on the product page.
+  @example
+  <!-- Home page > Splashy hero. Pick the product and a video in the section settings. -->
+{% endcomment %}
+
+{% render 'splashy-ui-styles' %}
+
+{%- liquid
+  if section.settings.button_product != blank
+    assign button_url = section.settings.button_product.url
+  elsif section.settings.button_link != blank
+    assign button_url = section.settings.button_link
+  else
+    assign button_url = routes.all_products_collection_url
+  endif
+-%}
+
+<div class="sc-section sc-hero">
+  <div class="sc-wrap sc-hero__grid">
+    <div class="sc-hero__copy">
+      {%- if section.settings.kicker != blank -%}
+        <p class="sc-kicker">{{ section.settings.kicker | escape }}</p>
+      {%- endif -%}
+      <h1 class="sc-title sc-hero__title">{{ section.settings.heading | escape }}</h1>
+
+      {%- if section.settings.text != blank -%}
+        <div class="sc-text sc-hero__text">{{ section.settings.text }}</div>
+      {%- endif -%}
+
+      {%- if section.settings.button_label != blank -%}
+        <a class="sc-btn sc-hero__btn" href="{{ button_url }}">{{ section.settings.button_label | escape }}</a>
+      {%- endif -%}
+      {%- if section.settings.reassurance != blank -%}
+        <p class="sc-hero__reassure">{{ section.settings.reassurance | escape }}</p>
+      {%- endif -%}
+    </div>
+
+    <div class="sc-hero__media sc-card">
+      {%- if section.settings.video != blank -%}
+        {{
+          section.settings.video
+          | video_tag:
+            autoplay: true,
+            loop: true,
+            muted: true,
+            playsinline: true,
+            controls: false,
+            preload: 'metadata',
+            image_size: '1080x',
+            class: 'sc-hero__video'
+        }}
+      {%- else -%}
+        {% render 'splashy-placeholder', label: 'Looping video', hint: 'Pick a video in this section' %}
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .sc-hero {
+    padding-block-start: clamp(28px, 6vw, 72px);
+    background:
+      radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--sc-sky) 22%, transparent) 0 120px, transparent 121px),
+      radial-gradient(circle at 92% 88%, color-mix(in srgb, var(--sc-orange) 20%, transparent) 0 90px, transparent 91px),
+      var(--sc-cream);
+  }
+
+  .sc-hero__grid {
+    display: grid;
+    gap: 32px;
+    align-items: start;
+  }
+
+  .sc-hero__copy {
+    min-width: 0;
+  }
+
+  .sc-hero__title {
+    margin-block-end: 12px;
+    font-size: clamp(2.25rem, 10vw, 4.25rem);
+  }
+
+  .sc-hero__text {
+    max-width: 36ch;
+    margin-block-end: 24px;
+  }
+
+  .sc-hero__text p {
+    margin: 0;
+  }
+
+  .sc-hero__btn {
+    width: 100%;
+    min-height: 60px;
+    font-size: 1.375rem;
+  }
+
+  .sc-hero__reassure {
+    margin: 12px 0 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .sc-hero__media {
+    aspect-ratio: 9 / 16;
+    width: min(70%, 300px);
+    margin-inline: auto;
+    padding: 0;
+    overflow: hidden;
+    rotate: 2deg;
+  }
+
+  .sc-hero__media .sc-placeholder {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .sc-hero__video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (min-width: 750px) {
+    .sc-hero__grid {
+      grid-template-columns: 1.2fr 1fr;
+      align-items: center;
+    }
+
+    .sc-hero__btn {
+      width: auto;
+      min-width: 260px;
+    }
+
+    .sc-hero__reassure {
+      text-align: start;
+    }
+
+    .sc-hero__media {
+      width: min(100%, 360px);
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Splashy hero",
+  "class": "sc-hero-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Headline"
+    },
+    {
+      "type": "text",
+      "id": "kicker",
+      "label": "Small label above the heading",
+      "default": "Phone mount for your water gun"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Aim once. Film both."
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>Your phone rides on your gun, so wherever you aim, you’re recording. Your target and you, on one clip, with a timestamp.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Buy button"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button text",
+      "default": "Get the mount"
+    },
+    {
+      "type": "product",
+      "id": "button_product",
+      "label": "Button product"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Or link the button somewhere else",
+      "info": "Used only when no product is picked."
+    },
+    {
+      "type": "text",
+      "id": "reassurance",
+      "label": "Line under the button",
+      "default": "Ships assembled · Free app · Shipping included"
+    },
+    {
+      "type": "header",
+      "content": "Video"
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "Looping video",
+      "info": "Plays muted on a loop. A tall (9:16) video fits best."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Splashy hero"
+    }
+  ]
+}
+{% endschema %}

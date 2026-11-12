@@ -1,0 +1,16 @@
+{% doc %}
+  A clearly labeled stand-in for media the merchant hasn't picked yet
+  (logo, illustration, video). Styles live in splashy-styles.
+
+  @param {string} label - What goes here, e.g. "Illustration 1"
+  @param {string} [hint] - Where to swap it, e.g. "Pick an image in this block's settings"
+
+  @example
+  {% render 'splashy-placeholder', label: 'Logo', hint: 'Theme settings > Logo' %}
+{% enddoc %}
+<div class="sc-placeholder" role="img" aria-label="{{ label | escape }} (placeholder)">
+  <span>
+    {{- label | escape -}}
+    {%- if hint != blank %}<small>{{ hint | escape }}</small>{% endif -%}
+  </span>
+</div>

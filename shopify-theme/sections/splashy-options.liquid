@@ -1,0 +1,150 @@
+{% comment %}
+  Section contract.
+  "Ways to buy": a compact list of buying options (Option blocks) with a price each,
+  plus a footnote. Lives on the product page, the one place packages are explained.
+  Prices are typed in, so keep them in step with dashboard/src/lib/rules.ts.
+  @example
+  <!-- Product page > Splashy ways to buy -->
+{% endcomment %}
+
+{% render 'splashy-ui-styles' %}
+
+<div class="sc-section sc-options">
+  <div class="sc-wrap sc-options__wrap">
+    <h2 class="sc-title sc-options__title">{{ section.settings.heading | escape }}</h2>
+    {%- if section.settings.intro != blank -%}
+      <p class="sc-text sc-options__intro">{{ section.settings.intro | escape }}</p>
+    {%- endif -%}
+
+    <ul class="sc-options__list" role="list">
+      {%- for block in section.blocks -%}
+        <li
+          class="sc-options__row{% if block.settings.highlight %} sc-options__row--best{% endif %}"
+          {{ block.shopify_attributes }}
+        >
+          <span class="sc-options__name">
+            {{- block.settings.name | escape -}}
+            {%- if block.settings.note != blank -%}
+              <small>{{ block.settings.note | escape }}</small>
+            {%- endif -%}
+          </span>
+          <span class="sc-options__price">{{ block.settings.price | escape }}</span>
+        </li>
+      {%- endfor -%}
+    </ul>
+
+    {%- if section.settings.footnote != blank -%}
+      <p class="sc-options__footnote">{{ section.settings.footnote | escape }}</p>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .sc-options__wrap {
+    max-width: 640px;
+  }
+
+  .sc-options__title {
+    font-size: clamp(1.75rem, 6vw, 2.5rem);
+  }
+
+  .sc-options__intro {
+    margin-block-end: 20px;
+  }
+
+  .sc-options__list {
+    margin: 0;
+    padding: 0;
+    border: var(--sc-outline) solid var(--sc-ink);
+    border-radius: calc(var(--sc-radius) * 0.75);
+    background: #fff;
+    box-shadow: var(--sc-shadow) var(--sc-shadow) 0 var(--sc-ink);
+    list-style: none;
+    overflow: hidden;
+  }
+
+  .sc-options__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 18px;
+  }
+
+  .sc-options__row + .sc-options__row {
+    border-block-start: 2px dashed color-mix(in srgb, var(--sc-ink) 30%, transparent);
+  }
+
+  .sc-options__row--best {
+    background: color-mix(in srgb, var(--sc-orange) 35%, #fff);
+  }
+
+  .sc-options__name {
+    min-width: 0;
+    font-weight: 600;
+  }
+
+  .sc-options__name small {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.75;
+  }
+
+  .sc-options__price {
+    flex-shrink: 0;
+    font-family: var(--sc-display);
+    font-size: 1.375rem;
+    font-weight: 700;
+  }
+
+  .sc-options__footnote {
+    margin: 14px 0 0;
+    font-size: 0.95rem;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Splashy ways to buy",
+  "class": "sc-options-section",
+  "max_blocks": 8,
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Ways to buy" },
+    {
+      "type": "text",
+      "id": "intro",
+      "label": "Intro",
+      "default": "Order with friends on your host’s link and you all pay less. Shipping is always included."
+    },
+    {
+      "type": "text",
+      "id": "footnote",
+      "label": "Footnote",
+      "default": "Buying 2–4 in one order? Team packs take another 10, 15 or 20% off, on top of the box price."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "option",
+      "name": "Option",
+      "settings": [
+        { "type": "text", "id": "name", "label": "Name", "default": "Option" },
+        { "type": "text", "id": "note", "label": "Small note" },
+        { "type": "text", "id": "price", "label": "Price", "default": "$21" },
+        { "type": "checkbox", "id": "highlight", "label": "Highlight", "default": false }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Splashy ways to buy",
+      "blocks": [
+        { "type": "option", "settings": { "name": "School box of 5+", "note": "15% off · ships the next day", "price": "$17.85", "highlight": true } },
+        { "type": "option", "settings": { "name": "School box of 2–4", "note": "10% off · ships to your host", "price": "$18.90" } },
+        { "type": "option", "settings": { "name": "Ship to me alone", "note": "Ships right away", "price": "$21" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

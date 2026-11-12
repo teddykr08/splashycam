@@ -1,0 +1,102 @@
+{% comment %}
+  Section contract.
+  Splashy Cam's small footer: a short line of text, the store's policy links and the
+  copyright. Replaces Horizon's multi-column footer and email signup.
+  @example
+  <!-- Footer group > Splashy footer -->
+{% endcomment %}
+
+{% render 'splashy-ui-styles' %}
+
+<div class="sc-footer">
+  <div class="sc-footer__inner">
+    {%- if section.settings.tagline != blank -%}
+      <p class="sc-footer__tagline">{{ section.settings.tagline | escape }}</p>
+    {%- endif -%}
+
+    {%- if shop.policies.size > 0 or section.settings.contact_email != blank -%}
+      <ul class="sc-footer__links" role="list">
+        {%- for policy in shop.policies -%}
+          <li><a href="{{ policy.url }}">{{ policy.title | escape }}</a></li>
+        {%- endfor -%}
+        {%- if section.settings.contact_email != blank -%}
+          <li><a href="mailto:{{ section.settings.contact_email | escape }}">Contact</a></li>
+        {%- endif -%}
+      </ul>
+    {%- endif -%}
+
+    <p class="sc-footer__copy">&copy; {{ 'now' | date: '%Y' }} {{ shop.name | escape }}</p>
+  </div>
+</div>
+
+{% stylesheet %}
+  .sc-footer {
+    padding: 32px 16px 40px;
+    border-block-start: var(--sc-outline) solid var(--sc-ink);
+    background: var(--sc-ink);
+    color: var(--sc-cream);
+    text-align: center;
+  }
+
+  .sc-footer__inner {
+    display: grid;
+    gap: 14px;
+    max-width: 1080px;
+    margin-inline: auto;
+  }
+
+  .sc-footer__tagline {
+    margin: 0;
+    font-family: var(--sc-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  .sc-footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 20px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sc-footer__links a {
+    display: inline-block;
+    padding-block: 6px;
+    color: var(--sc-cream);
+  }
+
+  .sc-footer__copy {
+    margin: 0;
+    font-size: 0.875rem;
+    opacity: 0.75;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Splashy footer",
+  "class": "sc-footer-section",
+  "enabled_on": { "groups": ["footer"] },
+  "settings": [
+    {
+      "type": "text",
+      "id": "tagline",
+      "label": "Tagline",
+      "default": "Made for your school's game."
+    },
+    {
+      "type": "text",
+      "id": "contact_email",
+      "label": "Contact email",
+      "info": "Adds a Contact link. Leave blank to hide it."
+    },
+    {
+      "type": "paragraph",
+      "content": "Policy links come from Settings > Policies in your Shopify admin."
+    }
+  ]
+}
+{% endschema %}
