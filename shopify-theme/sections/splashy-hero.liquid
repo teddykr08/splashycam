@@ -1,7 +1,7 @@
 {% comment %}
   Section contract.
-  Home page hero: what the mount does, in one line, the Buy button and a looping,
-  muted video (or a labeled placeholder). Prices live on the product page.
+  Home page hero: heading, the price, the Buy button and a looping, muted clip
+  (or a labeled placeholder). Its job is the order.
   @example
   <!-- Home page > Splashy hero. Pick the product and a video in the section settings. -->
 {% endcomment %}
@@ -25,6 +25,13 @@
         <p class="sc-kicker">{{ section.settings.kicker | escape }}</p>
       {%- endif -%}
       <h1 class="sc-title sc-hero__title">{{ section.settings.heading | escape }}</h1>
+
+      {%- if section.settings.price != blank -%}
+        <p class="sc-hero__price">
+          <strong>{{ section.settings.price | escape }}</strong>
+          {%- if section.settings.price_note != blank %} <span>{{ section.settings.price_note | escape }}</span>{% endif -%}
+        </p>
+      {%- endif -%}
 
       {%- if section.settings.text != blank -%}
         <div class="sc-text sc-hero__text">{{ section.settings.text }}</div>
@@ -81,6 +88,27 @@
   .sc-hero__title {
     margin-block-end: 12px;
     font-size: clamp(2.25rem, 10vw, 4.25rem);
+  }
+
+  .sc-hero__price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    margin: 0 0 16px;
+    font-family: var(--sc-display);
+  }
+
+  .sc-hero__price strong {
+    font-size: clamp(3rem, 14vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1;
+    text-shadow: 3px 3px 0 var(--sc-orange);
+  }
+
+  .sc-hero__price span {
+    font-size: 1.125rem;
+    font-weight: 600;
   }
 
   .sc-hero__text {
@@ -169,10 +197,22 @@
       "default": "Aim once. Film both."
     },
     {
+      "type": "text",
+      "id": "price",
+      "label": "Price",
+      "default": "$21"
+    },
+    {
+      "type": "text",
+      "id": "price_note",
+      "label": "Next to the price",
+      "default": "shipping included"
+    },
+    {
       "type": "richtext",
       "id": "text",
       "label": "Text",
-      "default": "<p>Your phone rides on your gun, so wherever you aim, you’re recording. Your target and you, on one clip, with a timestamp.</p>"
+      "default": "<p>Your phone rides on your gun, so wherever you aim, you’re recording.</p>"
     },
     {
       "type": "header",
@@ -199,7 +239,7 @@
       "type": "text",
       "id": "reassurance",
       "label": "Line under the button",
-      "default": "Ships assembled · Free app · Shipping included"
+      "default": "Ships fully assembled"
     },
     {
       "type": "header",

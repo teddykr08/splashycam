@@ -1,0 +1,69 @@
+{% doc %}
+  For "School box" variants only: shows whose box the buyer is joining and the
+  "ship mine alone" checkbox, sent with the cart line as a line item property.
+  Renders nothing for "Ship to me". Must sit inside the product <form> so the
+  checkbox is submitted. Buy buttons re-render when the variant changes, so this
+  follows the selected variant.
+
+  @param {object} variant - The selected variant
+  @param {string} form_id - The product form's id, to make the checkbox id unique
+
+  @example
+  {% render 'splashy-box-note', variant: product.selected_or_first_available_variant, form_id: product_form_id %}
+{% enddoc %}
+{%- liquid
+  assign is_box = false
+  for option in variant.product.options
+    if option == 'Delivery' and variant.options[forloop.index0] == 'School box'
+      assign is_box = true
+    endif
+  endfor
+-%}
+{%- if is_box -%}
+  <div class="sc-box-note">
+    {%- if cart.attributes.host != blank -%}
+      <p class="sc-box-note__host">Joining the <strong>{{ cart.attributes.host | upcase | escape }}</strong> school box</p>
+    {%- endif -%}
+    <label class="sc-box-note__check" for="{{ form_id }}-ship-alone">
+      <input
+        type="checkbox"
+        id="{{ form_id }}-ship-alone"
+        name="properties[Ship mine alone if my box isn't full in 3 days]"
+        value="Yes"
+      >
+      <span>Ship mine alone if my box isn't full in 3 days</span>
+    </label>
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .sc-box-note {
+    display: grid;
+    gap: 8px;
+    margin-block: 12px;
+    padding: 12px 14px;
+    border: var(--sc-outline, 2px) solid var(--sc-ink, currentcolor);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--sc-sky, #3bb4f2) 15%, #fff);
+  }
+
+  .sc-box-note__host {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .sc-box-note__check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    cursor: pointer;
+  }
+
+  .sc-box-note__check input {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    accent-color: var(--sc-orange, #ff8a1e);
+  }
+{% endstylesheet %}

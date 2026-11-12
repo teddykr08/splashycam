@@ -46,6 +46,12 @@
     font-family: var(--sc-display);
   }
 
+  /* "School box" is only for buyers who came through a school's link (see splashy-host). */
+  html:not(.sc-has-host) .variant-option__button-label:has(input[data-option-name='Delivery'][value='School box']),
+  html:not(.sc-has-host) option[data-option-name='Delivery'][value='School box'] {
+    display: none;
+  }
+
   /* Horizon's buttons, store-wide: chunky outline, pill shape, offset shadow. */
   :is(.button, .button-secondary):not(.button-unstyled) {
     border: var(--sc-outline) solid var(--sc-ink);

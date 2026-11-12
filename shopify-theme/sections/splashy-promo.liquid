@@ -1,0 +1,49 @@
+{% comment %}
+  Section contract.
+  A single bold line in a colored band, e.g. "Order with your school's link, save 10%".
+  @example
+  <!-- Home page > Splashy one-liner, right under the hero -->
+{% endcomment %}
+
+{% render 'splashy-ui-styles' %}
+
+{%- if section.settings.text != blank -%}
+  <div class="sc-promo">
+    <p class="sc-promo__text">{{ section.settings.text | escape }}</p>
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .sc-promo {
+    padding: 16px;
+    border-block: var(--sc-outline) solid var(--sc-ink);
+    background: var(--sc-orange);
+    text-align: center;
+  }
+
+  .sc-promo__text {
+    max-width: 1080px;
+    margin: 0 auto;
+    font-family: var(--sc-display);
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+    font-weight: 700;
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Splashy one-liner",
+  "class": "sc-promo-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "text",
+      "label": "Text",
+      "default": "Order with your school's link, save 10%"
+    }
+  ],
+  "presets": [{ "name": "Splashy one-liner" }]
+}
+{% endschema %}

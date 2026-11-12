@@ -110,12 +110,17 @@
   "class": "sc-options-section",
   "max_blocks": 8,
   "settings": [
-    { "type": "text", "id": "heading", "label": "Heading", "default": "Ways to buy" },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Ways to buy"
+    },
     {
       "type": "text",
       "id": "intro",
       "label": "Intro",
-      "default": "Order with friends on your host’s link and you all pay less. Shipping is always included."
+      "default": "Order with your school’s link and save. Shipping is always included."
     },
     {
       "type": "text",
@@ -129,10 +134,29 @@
       "type": "option",
       "name": "Option",
       "settings": [
-        { "type": "text", "id": "name", "label": "Name", "default": "Option" },
-        { "type": "text", "id": "note", "label": "Small note" },
-        { "type": "text", "id": "price", "label": "Price", "default": "$21" },
-        { "type": "checkbox", "id": "highlight", "label": "Highlight", "default": false }
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Name",
+          "default": "Option"
+        },
+        {
+          "type": "text",
+          "id": "note",
+          "label": "Small note"
+        },
+        {
+          "type": "text",
+          "id": "price",
+          "label": "Price",
+          "default": "$21"
+        },
+        {
+          "type": "checkbox",
+          "id": "highlight",
+          "label": "Highlight",
+          "default": false
+        }
       ]
     }
   ],
@@ -140,9 +164,31 @@
     {
       "name": "Splashy ways to buy",
       "blocks": [
-        { "type": "option", "settings": { "name": "School box of 5+", "note": "15% off · ships the next day", "price": "$17.85", "highlight": true } },
-        { "type": "option", "settings": { "name": "School box of 2–4", "note": "10% off · ships to your host", "price": "$18.90" } },
-        { "type": "option", "settings": { "name": "Ship to me alone", "note": "Ships right away", "price": "$21" } }
+        {
+          "type": "option",
+          "settings": {
+            "name": "School box of 5+",
+            "note": "15% off · ships the day after it fills",
+            "price": "$17.85",
+            "highlight": true
+          }
+        },
+        {
+          "type": "option",
+          "settings": {
+            "name": "School box of 2–4",
+            "note": "10% off · with your school’s link",
+            "price": "$18.90"
+          }
+        },
+        {
+          "type": "option",
+          "settings": {
+            "name": "Ship to me alone",
+            "note": "Ships right away",
+            "price": "$21"
+          }
+        }
       ]
     }
   ]

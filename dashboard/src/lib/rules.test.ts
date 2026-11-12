@@ -1,72 +1,104 @@
 import { describe, expect, it } from "vitest";
 import {
   boxDeadline,
-  boxDiscount,
+  boxRefundCents,
   canShipNow,
+  checkoutPriceCents,
+  classifyOrder,
   decideBox,
+  finalBoxPriceCents,
   hostCutCents,
-  orderPrice,
   potCents,
+  shouldLeaveBox,
   teamPackDiscount,
+  variantPriceTable,
   type BoxFacts,
 } from "./rules";
 
 const d = (iso: string) => new Date(iso);
 
-describe("prices", () => {
-  it("solo is $21", () => {
-    expect(orderPrice(1, "alone", 0).totalCents).toBe(2100);
+describe("checkout prices (the 8 variants)", () => {
+  it("Ship to me: $21 / $37.80 / $53.55 / $67.20", () => {
+    expect([1, 2, 3, 4].map((u) => checkoutPriceCents(u, "alone"))).toEqual([2100, 3780, 5355, 6720]);
   });
 
-  it("team packs: 2/3/4 units get 10/15/20% off", () => {
-    expect(teamPackDiscount(1)).toBe(0);
-    expect(orderPrice(2, "alone", 0).totalCents).toBe(3780); // 2 × 21 × 0.90
-    expect(orderPrice(3, "alone", 0).totalCents).toBe(5355); // 3 × 21 × 0.85
-    expect(orderPrice(4, "alone", 0).totalCents).toBe(6720); // 4 × 21 × 0.80
+  it("School box (×0.9): $18.90 / $34.02 / $48.20 / $60.48", () => {
+    expect([1, 2, 3, 4].map((u) => checkoutPriceCents(u, "box"))).toEqual([1890, 3402, 4820, 6048]);
+  });
+
+  it("variant table lists all 8", () => {
+    expect(variantPriceTable()).toHaveLength(8);
+  });
+
+  it("team pack discounts 10/15/20%", () => {
+    expect([1, 2, 3, 4].map(teamPackDiscount)).toEqual([0, 0.1, 0.15, 0.2]);
   });
 
   it("rejects 0, 5+ or fractional units", () => {
-    for (const bad of [0, 5, 1.5]) expect(() => orderPrice(bad, "box", 2)).toThrow(RangeError);
+    for (const bad of [0, 5, 1.5]) expect(() => checkoutPriceCents(bad, "box")).toThrow(RangeError);
+  });
+});
+
+describe("box refunds", () => {
+  it("box under 5: final price is what they paid, no refund", () => {
+    for (const n of [1, 2, 4]) {
+      expect(finalBoxPriceCents(1, n)).toBe(1890);
+      expect(boxRefundCents(1, 1890, n)).toBe(0);
+    }
   });
 
-  it("box discount counts orders: 1 none, 2–4 10%, 5+ 15%", () => {
-    expect(boxDiscount(1)).toBe(0);
-    expect(boxDiscount(2)).toBe(0.1);
-    expect(boxDiscount(4)).toBe(0.1);
-    expect(boxDiscount(5)).toBe(0.15);
-    expect(boxDiscount(40)).toBe(0.15);
+  it("box of 5+: a single unit gets $1.05 back (15% off $21 = $17.85)", () => {
+    expect(finalBoxPriceCents(1, 5)).toBe(1785);
+    expect(boxRefundCents(1, 1890, 5)).toBe(105);
+    expect(boxRefundCents(1, 1890, 12)).toBe(105);
   });
 
-  it("team pack and box discounts multiply", () => {
-    // 4 units × $21 × 0.80 × 0.85 = $57.12
-    expect(orderPrice(4, "box", 5).totalCents).toBe(5712);
-    expect(orderPrice(1, "box", 3).totalCents).toBe(1890);
+  it("box of 5+ with a team pack: discounts multiply", () => {
+    // 4-pack: $84 × 0.80 × 0.85 = $57.12; paid $60.48 → $3.36 back
+    expect(finalBoxPriceCents(4, 5)).toBe(5712);
+    expect(boxRefundCents(4, 6048, 5)).toBe(336);
   });
 
-  it("a box that ships with 1 order gets no box discount", () => {
-    expect(orderPrice(1, "box", 1).totalCents).toBe(2100);
+  it("never refunds more than was paid or a negative amount", () => {
+    expect(boxRefundCents(1, 50, 5)).toBe(0);
+    expect(boxRefundCents(1, 0, 5)).toBe(0);
+  });
+});
+
+describe("incoming orders", () => {
+  it("box order with a host joins the box", () => {
+    expect(classifyOrder("box", true)).toEqual({ shipping: "box", flag: null });
   });
 
-  it("shipping alone never gets the box discount", () => {
-    expect(orderPrice(1, "alone", 9).totalCents).toBe(2100);
+  it("box order without a host ships alone and is flagged", () => {
+    expect(classifyOrder("box", false)).toEqual({ shipping: "alone", flag: "box_without_host" });
+  });
+
+  it("ship-to-me orders ship alone, host or not", () => {
+    expect(classifyOrder("alone", true)).toEqual({ shipping: "alone", flag: null });
+    expect(classifyOrder("alone", false)).toEqual({ shipping: "alone", flag: null });
   });
 });
 
 describe("cuts", () => {
-  it("host cut is on the $21 list price", () => {
+  it("host cut is on the full $21 price", () => {
     expect(hostCutCents(1, "box", 3)).toBe(210); // 10%
     expect(hostCutCents(1, "box", 5)).toBe(315); // 15%
-    expect(hostCutCents(1, "alone", 0)).toBe(105); // 5%
-    expect(hostCutCents(4, "box", 5)).toBe(1260); // 15% of $84, not of the discounted price
+    expect(hostCutCents(4, "box", 5)).toBe(1260); // 15% of $84
   });
 
-  it("1-order box pays the host 5% (assumption)", () => {
-    expect(hostCutCents(1, "box", 1)).toBe(105);
+  it("anything that ships alone on a host's code pays 5%", () => {
+    expect(hostCutCents(1, "alone", 0)).toBe(105);
+    expect(hostCutCents(1, "box", 1)).toBe(105); // a box that ships with 1 order
+  });
+
+  it("no host, no cut", () => {
+    expect(hostCutCents(1, "alone", 0, false)).toBe(0);
   });
 
   it("pot is 10% of what was paid, only if the game has one", () => {
-    expect(potCents(5712, true)).toBe(571);
-    expect(potCents(5712, false)).toBe(0);
+    expect(potCents(1785, true)).toBe(179);
+    expect(potCents(1785, false)).toBe(0);
   });
 });
 
@@ -92,55 +124,56 @@ describe("timing", () => {
   });
 });
 
+describe("ship mine alone if my box isn't full in 3 days", () => {
+  const order = { createdAt: d("2026-12-01T12:00:00Z"), shipAloneIfNotFull: true };
+
+  it("leaves after 3 days from that order when the box has under 5", () => {
+    expect(shouldLeaveBox(order, 3, d("2026-12-04T11:59:00Z"))).toBe(false);
+    expect(shouldLeaveBox(order, 3, d("2026-12-04T12:00:00Z"))).toBe(true);
+  });
+
+  it("stays if the box is full", () => {
+    expect(shouldLeaveBox(order, 5, d("2026-12-10T00:00:00Z"))).toBe(false);
+  });
+
+  it("stays if the buyer didn't tick it", () => {
+    expect(shouldLeaveBox({ ...order, shipAloneIfNotFull: false }, 1, d("2026-12-10T00:00:00Z"))).toBe(false);
+  });
+});
+
 describe("decideBox", () => {
-  const orders = (n: number, autoShip = false) =>
-    Array.from({ length: n }, (_, i) => ({ id: `o${i + 1}`, autoShip }));
+  const ids = (n: number) => Array.from({ length: n }, (_, i) => `o${i + 1}`);
   const box = (over: Partial<BoxFacts>): BoxFacts => ({
     openedAt: d("2026-12-01T00:00:00Z"),
     gameStartsAt: null, // deadline 2026-12-04
     filledAt: null,
-    orders: [],
+    orderIds: [],
     ...over,
   });
 
   it("a full box ships the day after the 5th order", () => {
-    const b = box({ orders: orders(5), filledAt: d("2026-12-02T10:00:00Z") });
+    const b = box({ orderIds: ids(5), filledAt: d("2026-12-02T10:00:00Z") });
     expect(decideBox(b, d("2026-12-03T09:00:00Z"))).toEqual({ action: "wait", until: d("2026-12-03T10:00:00Z") });
     expect(decideBox(b, d("2026-12-03T10:00:00Z"))).toMatchObject({ action: "ship", reason: "full" });
   });
 
-  it("a full box ships even before the deadline", () => {
-    const b = box({ orders: orders(6), filledAt: d("2026-12-01T01:00:00Z") });
-    expect(decideBox(b, d("2026-12-02T01:00:00Z"))).toMatchObject({ action: "ship", reason: "full" });
-  });
-
   it("waits until the deadline when not full", () => {
-    expect(decideBox(box({ orders: orders(3) }), d("2026-12-03T00:00:00Z"))).toEqual({
+    expect(decideBox(box({ orderIds: ids(3) }), d("2026-12-03T00:00:00Z"))).toEqual({
       action: "wait",
       until: d("2026-12-04T00:00:00Z"),
     });
   });
 
-  it("2–4 orders ship at the deadline", () => {
-    expect(decideBox(box({ orders: orders(2) }), d("2026-12-04T00:00:00Z"))).toEqual({
+  it("ships with whatever it has at the deadline, even 1 order", () => {
+    expect(decideBox(box({ orderIds: ids(1) }), d("2026-12-04T00:00:00Z"))).toEqual({
       action: "ship",
       reason: "deadline",
-      orderIds: ["o1", "o2"],
-    });
-  });
-
-  it("1 order with auto-ship ships at the deadline", () => {
-    expect(decideBox(box({ orders: orders(1, true) }), d("2026-12-04T00:00:00Z"))).toMatchObject({ action: "ship" });
-  });
-
-  it("1 order without auto-ship expires (never charged)", () => {
-    expect(decideBox(box({ orders: orders(1, false) }), d("2026-12-04T00:00:00Z"))).toEqual({
-      action: "expire",
       orderIds: ["o1"],
     });
+    expect(decideBox(box({ orderIds: ids(3) }), d("2026-12-04T00:00:00Z"))).toMatchObject({ action: "ship" });
   });
 
-  it("an empty box expires at the deadline", () => {
-    expect(decideBox(box({}), d("2026-12-05T00:00:00Z"))).toEqual({ action: "expire", orderIds: [] });
+  it("closes a box everyone left", () => {
+    expect(decideBox(box({}), d("2026-12-05T00:00:00Z"))).toEqual({ action: "close_empty" });
   });
 });

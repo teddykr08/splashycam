@@ -1,0 +1,49 @@
+{% doc %}
+  Remembers which host (school) link the buyer came from and credits that host.
+
+  - Opening any page with ?host=CODE saves CODE in this browser and on the cart
+    as the cart attribute "host", so it lands on the order (note_attributes).
+  - While a host is known, <html> gets the class "sc-has-host". Without it, CSS in
+    splashy-styles hides the "School box" delivery option, so only buyers who came
+    through a school's link can pick the box price. A host already on the cart
+    (cart.attributes.host) counts too.
+  - If "School box" is selected without a host (e.g. a shared ?variant= link),
+    it switches to "Ship to me".
+
+  Rendered once in the <head> of layout/theme.liquid, so the class is set before
+  the page paints.
+
+  @example
+  {% render 'splashy-host' %}
+{% enddoc %}
+<script>
+  (function () {
+    var KEY = 'splashy_host';
+    var VALID = /^[A-Z0-9-]{2,32}$/;
+    var fromUrl = (new URLSearchParams(location.search).get('host') || '').trim().toUpperCase();
+    var fromCart = {{ cart.attributes.host | default: '' | upcase | json }};
+    var stored = '';
+    try { stored = localStorage.getItem(KEY) || ''; } catch (e) {}
+
+    var host = VALID.test(fromUrl) ? fromUrl : VALID.test(stored) ? stored : VALID.test(fromCart) ? fromCart : '';
+    if (!host) return;
+
+    document.documentElement.classList.add('sc-has-host');
+    try { localStorage.setItem(KEY, host); } catch (e) {}
+
+    if (host !== fromCart) {
+      fetch({{ routes.cart_update_url | append: '.js' | json }}, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attributes: { host: host } }),
+      }).catch(function () {});
+    }
+  })();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (document.documentElement.classList.contains('sc-has-host')) return;
+    var box = document.querySelector('input[data-option-name="Delivery"][value="School box"]:checked');
+    var alone = document.querySelector('input[data-option-name="Delivery"][value="Ship to me"]');
+    if (box && alone) alone.click();
+  });
+</script>

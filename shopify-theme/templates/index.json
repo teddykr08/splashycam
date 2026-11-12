@@ -13,6 +13,10 @@
       "type": "splashy-hero",
       "settings": {}
     },
+    "promo": {
+      "type": "splashy-promo",
+      "settings": {}
+    },
     "benefits": {
       "type": "splashy-benefits",
       "blocks": {
@@ -20,95 +24,33 @@
           "type": "benefit",
           "settings": {
             "title": "Aim once, film both",
-            "text": "The camera points where your gun points. If you’re on target, you’re recording."
+            "text": "The camera points where your gun points. On target means on video."
           }
         },
         "benefit_2": {
           "type": "benefit",
           "settings": {
-            "title": "Your target and you",
-            "text": "One clip shows who you hit and that it was you. No more he-said, she-said."
+            "title": "Ready in 2 seconds",
+            "text": "Leave the mount on your gun. Drop your phone in and go."
           }
         },
         "benefit_3": {
           "type": "benefit",
           "settings": {
-            "title": "Eyes on the chase",
-            "text": "Stop juggling a phone. Focus on aiming and running, not on where the camera is pointing."
-          }
-        },
-        "benefit_4": {
-          "type": "benefit",
-          "settings": {
-            "title": "Stamped with the time",
-            "text": "The free app puts the time and a code on every clip, ready to send to your host."
+            "title": "Clips worth posting",
+            "text": "Your target and you in one shot, timestamped. Trim it and share it straight from the app."
           }
         }
       },
       "block_order": [
         "benefit_1",
         "benefit_2",
-        "benefit_3",
-        "benefit_4"
+        "benefit_3"
       ],
       "settings": {}
     },
-    "setup": {
-      "type": "splashy-setup",
-      "blocks": {
-        "term_1": {
-          "type": "step",
-          "settings": {
-            "time": "3 sec",
-            "label": "Put it on your gun",
-            "crossed": true,
-            "note": "Just leave it on"
-          }
-        },
-        "term_2": {
-          "type": "step",
-          "settings": {
-            "time": "2 sec",
-            "label": "Drop your phone in"
-          }
-        }
-      },
-      "block_order": [
-        "term_1",
-        "term_2"
-      ],
-      "settings": {}
-    },
-    "how_it_works": {
-      "type": "splashy-steps",
-      "blocks": {
-        "step_1": {
-          "type": "step",
-          "settings": {
-            "title": "Tighten it on",
-            "text": "The mount comes fully assembled. Tighten it onto your gun once and leave it there."
-          }
-        },
-        "step_2": {
-          "type": "step",
-          "settings": {
-            "title": "Drop your phone in",
-            "text": "Open the free Splashy Cam app. Scan the QR code in the box to get it."
-          }
-        },
-        "step_3": {
-          "type": "step",
-          "settings": {
-            "title": "Aim, hit, send",
-            "text": "If you’re on target, it’s on video. Send the stamped clip to your host."
-          }
-        }
-      },
-      "block_order": [
-        "step_1",
-        "step_2",
-        "step_3"
-      ],
+    "buy_again": {
+      "type": "splashy-cta",
       "settings": {}
     },
     "faq": {
@@ -117,36 +59,43 @@
         "question_1": {
           "type": "question",
           "settings": {
-            "question": "Does it come assembled?",
-            "answer": "<p>Yes. It arrives ready to go. Just tighten it onto your gun and put your phone in.</p>"
+            "question": "How does it work?",
+            "answer": "<p>Tighten the mount onto your gun once and leave it there. Drop your phone in, open the free Splashy Cam app and play. It films your target and you, and stamps the time on every clip.</p>"
           }
         },
         "question_2": {
           "type": "question",
           "settings": {
-            "question": "Do I need the app?",
-            "answer": "<p>The Splashy Cam app is free and separate. Scan the QR code in the box to download it.</p>"
+            "question": "How do I save 10%?",
+            "answer": "<p>Order with your school’s link and pick “School box”. Everyone who orders on that link goes in one box. If your school’s box gets to 5 orders, you get another 5% back automatically.</p>"
           }
         },
         "question_3": {
           "type": "question",
           "settings": {
-            "question": "Can I leave it on my gun?",
-            "answer": "<p>Yes, that’s the idea. Leave it on and setup is just dropping your phone in.</p>"
+            "question": "When will it ship?",
+            "answer": "<p>A school box ships the day after it reaches 5 orders, or at its deadline: 5 days before your game starts, or 3 days after the box opens once the game is on. It always ships, even if it doesn’t fill.</p>"
           }
         },
         "question_4": {
           "type": "question",
           "settings": {
-            "question": "What does the app add to my clips?",
-            "answer": "<p>A stamp with the time, a code and your city, plus a proof card you can send to your host.</p>"
+            "question": "Can I get mine sooner?",
+            "answer": "<p>Pick “Ship to me” and it ships right away for $21. Or, in a school box, tick “Ship mine alone if my box isn’t full in 3 days” and it ships on its own after 3 days at the same price.</p>"
           }
         },
         "question_5": {
           "type": "question",
           "settings": {
-            "question": "How do group orders work?",
-            "answer": "<p>Order on your school host’s link and your order joins their box. The more orders in the box, the less everyone pays. See the options on the product page.</p>"
+            "question": "Buying for friends?",
+            "answer": "<p>Get 2, 3 or 4 in one order and save 10, 15 or 20%. That stacks with the school box discount.</p>"
+          }
+        },
+        "question_6": {
+          "type": "question",
+          "settings": {
+            "question": "Running your school’s game?",
+            "answer": "<p>Become a host. You get a link for your school and earn on every order that uses it. Get in touch with us to set it up.</p>"
           }
         }
       },
@@ -155,21 +104,19 @@
         "question_2",
         "question_3",
         "question_4",
-        "question_5"
+        "question_5",
+        "question_6"
       ],
-      "settings": {}
-    },
-    "host_pitch": {
-      "type": "splashy-pitch",
-      "settings": {}
+      "settings": {
+        "heading": "Questions?"
+      }
     }
   },
   "order": [
     "hero",
+    "promo",
     "benefits",
-    "setup",
-    "how_it_works",
-    "faq",
-    "host_pitch"
+    "buy_again",
+    "faq"
   ]
 }
