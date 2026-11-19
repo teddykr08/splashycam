@@ -1,26 +1,404 @@
 @import "tailwindcss";
 
+/* Splashy Cam look, same tokens as the Shopify theme's "Splashy Cam look" settings. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --sc-sky: #3bb4f2;
+  --sc-orange: #ff8a1e;
+  --sc-cream: #fff5e1;
+  --sc-ink: #1d2b3a;
+  --sc-outline: 3px;
+  --sc-radius: 24px;
+  --sc-shadow: 5px;
+  --sc-display: var(--font-display), ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
+  --sc-body: var(--font-body), system-ui, sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--sc-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--sc-cream);
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--sc-cream);
+  color: var(--sc-ink);
+  font-family: var(--sc-body);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* ---- shared pieces ---- */
+.sc-section {
+  padding-block: clamp(40px, 9vw, 88px);
+  padding-inline: 16px;
+}
+
+.sc-wrap {
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.sc-title {
+  margin: 0 0 14px;
+  font-family: var(--sc-display);
+  font-weight: 700;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.sc-text {
+  margin: 0;
+  font-size: 1.125rem;
+  text-wrap: pretty;
+}
+
+.sc-kicker {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 4px 14px;
+  border: var(--sc-outline) solid var(--sc-ink);
+  border-radius: 999px;
+  background: var(--sc-orange);
+  font-family: var(--sc-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sc-card {
+  min-width: 0;
+  padding: 24px;
+  border: var(--sc-outline) solid var(--sc-ink);
+  border-radius: var(--sc-radius);
+  background: #fff;
+  box-shadow: var(--sc-shadow) var(--sc-shadow) 0 var(--sc-ink);
+}
+
+.sc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 10px 28px;
+  border: var(--sc-outline) solid var(--sc-ink);
+  border-radius: 999px;
+  background: var(--sc-orange);
+  color: var(--sc-ink);
+  box-shadow: var(--sc-shadow) var(--sc-shadow) 0 var(--sc-ink);
+  font-family: var(--sc-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sc-btn:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.sc-btn--wide {
+  width: 100%;
+}
+
+.sc-btn:active:not(:disabled) {
+  transform: translate(var(--sc-shadow), var(--sc-shadow));
+  box-shadow: 0 0 0 var(--sc-ink);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .sc-btn:hover:not(:disabled) {
+    transform: translate(-3px, -3px);
+    box-shadow: calc(var(--sc-shadow) + 3px) calc(var(--sc-shadow) + 3px) 0 var(--sc-ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-btn {
+    transition: none;
+  }
+}
+
+:is(.sc-btn, .sc-field, .sc-radio input, .sc-footer__ig):focus-visible {
+  outline: 3px solid var(--sc-sky);
+  outline-offset: 3px;
+}
+
+.sc-placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 8px;
+  border: var(--sc-outline) dashed var(--sc-ink);
+  border-radius: 14px;
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--sc-sky) 18%, #fff),
+    color-mix(in srgb, var(--sc-sky) 18%, #fff) 12px,
+    #fff 12px,
+    #fff 24px
+  );
+  font-family: var(--sc-display);
+  font-weight: 600;
+  text-align: center;
+}
+
+.sc-placeholder small {
+  display: block;
+  font-family: var(--sc-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.7;
+  overflow-wrap: anywhere;
+}
+
+/* ---- forms ---- */
+.sc-field {
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 18px;
+  border: var(--sc-outline) solid var(--sc-ink);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--sc-ink);
+  font: inherit;
+  font-size: 1.0625rem; /* 17px: big enough that iOS doesn't zoom in on focus */
+}
+
+.sc-field[aria-invalid="true"] {
+  border-color: #c62828;
+}
+
+.sc-field-group {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.sc-label {
+  padding: 0;
+  font-family: var(--sc-display);
+  font-weight: 600;
+}
+
+.sc-error {
+  margin: 0;
+  color: #b71c1c;
+  font-weight: 700;
+}
+
+.sc-done {
+  margin: 0;
+  padding: 16px 20px;
+  border: var(--sc-outline) solid var(--sc-ink);
+  border-radius: 20px;
+  background: var(--sc-sky);
+  font-family: var(--sc-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.sc-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* ---- 1–3: logo, pitch, clip, signup ---- */
+.sc-launch {
+  padding-block-start: clamp(24px, 6vw, 56px);
+  background:
+    radial-gradient(circle at 10% 12%, color-mix(in srgb, var(--sc-sky) 25%, transparent) 0 110px, transparent 111px),
+    radial-gradient(circle at 92% 70%, color-mix(in srgb, var(--sc-orange) 22%, transparent) 0 90px, transparent 91px),
+    var(--sc-cream);
+}
+
+.sc-launch__wrap {
+  display: grid;
+  justify-items: center;
+  gap: 24px;
+  text-align: center;
+}
+
+.sc-launch__logo {
+  width: 180px;
+  height: 64px;
+}
+
+.sc-launch__logo-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sc-launch__pitch {
+  margin: 0;
+  font-size: clamp(1.75rem, 7.5vw, 3rem);
+}
+
+.sc-launch__video {
+  aspect-ratio: 9 / 16;
+  width: min(78%, 340px);
+  padding: 0;
+  overflow: hidden;
+  rotate: -1.5deg;
+}
+
+.sc-launch__video video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sc-launch__video .sc-placeholder {
+  border: 0;
+  border-radius: 0;
+}
+
+.sc-launch__signup {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  margin-block-start: 8px;
+}
+
+.sc-launch__when {
+  margin: 0;
+  font-family: var(--sc-display);
+  font-size: clamp(2rem, 9vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 3px 3px 0 var(--sc-orange);
+}
+
+.sc-waitlist {
+  display: grid;
+  gap: 12px;
+  margin-block-start: 6px;
+  text-align: start;
+}
+
+@media (min-width: 560px) {
+  .sc-waitlist {
+    grid-template-columns: 1fr auto;
+  }
+
+  .sc-waitlist .sc-error {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---- 4: founding hosts ---- */
+.sc-apply {
+  border-block: var(--sc-outline) solid var(--sc-ink);
+  background: var(--sc-sky);
+}
+
+.sc-apply__wrap {
+  display: grid;
+  gap: 28px;
+}
+
+.sc-apply__pitch {
+  text-align: center;
+}
+
+.sc-apply__title {
+  font-size: clamp(1.75rem, 7vw, 2.75rem);
+}
+
+.sc-apply__card {
+  background: var(--sc-cream);
+}
+
+.sc-host-form {
+  display: grid;
+  gap: 16px;
+}
+
+.sc-pair {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 560px) {
+  .sc-pair {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.sc-radios {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.sc-radio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 16px;
+  border: var(--sc-outline) solid var(--sc-ink);
+  border-radius: 16px;
+  background: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sc-radio:has(input:checked) {
+  background: var(--sc-orange);
+}
+
+.sc-radio input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--sc-ink);
+}
+
+/* ---- 5: footer ---- */
+.sc-footer {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 28px 16px 36px;
+  background: var(--sc-ink);
+  color: var(--sc-cream);
+  text-align: center;
+}
+
+.sc-footer__ig {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 18px;
+  border: var(--sc-outline) solid var(--sc-cream);
+  border-radius: 999px;
+  color: var(--sc-cream);
+  font-family: var(--sc-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sc-footer__copy {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
 }

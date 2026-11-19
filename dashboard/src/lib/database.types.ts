@@ -53,6 +53,63 @@ export type Database = {
           },
         ];
       };
+      host_applications: {
+        Row: {
+          buy_in: boolean;
+          created_at: string;
+          email: string;
+          game_starts_on: string;
+          id: string;
+          instagram: string;
+          name: string;
+          player_count: number;
+          school: string;
+        };
+        Insert: {
+          buy_in: boolean;
+          created_at?: string;
+          email: string;
+          game_starts_on: string;
+          id?: string;
+          instagram: string;
+          name: string;
+          player_count: number;
+          school: string;
+        };
+        Update: {
+          buy_in?: boolean;
+          created_at?: string;
+          email?: string;
+          game_starts_on?: string;
+          id?: string;
+          instagram?: string;
+          name?: string;
+          player_count?: number;
+          school?: string;
+        };
+        Relationships: [];
+      };
+      waitlist: {
+        Row: {
+          created_at: string;
+          email: string;
+          id: string;
+          source: string;
+        };
+        Insert: {
+          created_at?: string;
+          email: string;
+          id?: string;
+          source?: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string;
+          id?: string;
+          source?: string;
+        };
+        Relationships: [];
+      };
       hosts: {
         Row: {
           code: string;
