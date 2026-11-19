@@ -61,7 +61,6 @@ describe("host application", () => {
     school: "Lincoln High",
     game_starts_on: "2027-02-01",
     player_count: "120",
-    buy_in: "yes",
   };
 
   it("parses a complete application", () => {
@@ -74,24 +73,19 @@ describe("host application", () => {
         school: "Lincoln High",
         game_starts_on: "2027-02-01",
         player_count: 120,
-        buy_in: true,
       },
     });
   });
 
-  it("buy-in no → false", () => {
-    const r = parseHostApplication(form({ ...good, buy_in: "no" }));
-    expect(r.ok && r.data.buy_in).toBe(false);
-  });
 
   it("reports every bad field at once", () => {
     const r = parseHostApplication(
-      form({ name: "", email: "x", instagram: "no spaces", school: "", game_starts_on: "soon", player_count: "lots", buy_in: "" }),
+      form({ name: "", email: "x", instagram: "no spaces", school: "", game_starts_on: "soon", player_count: "lots" }),
     );
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(Object.keys(r.errors).sort()).toEqual(
-        ["buy_in", "email", "game_starts_on", "instagram", "name", "player_count", "school"].sort(),
+        ["email", "game_starts_on", "instagram", "name", "player_count", "school"].sort(),
       );
     }
   });

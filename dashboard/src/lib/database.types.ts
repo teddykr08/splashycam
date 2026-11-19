@@ -55,7 +55,6 @@ export type Database = {
       };
       host_applications: {
         Row: {
-          buy_in: boolean;
           created_at: string;
           email: string;
           game_starts_on: string;
@@ -66,7 +65,6 @@ export type Database = {
           school: string;
         };
         Insert: {
-          buy_in: boolean;
           created_at?: string;
           email: string;
           game_starts_on: string;
@@ -77,7 +75,6 @@ export type Database = {
           school: string;
         };
         Update: {
-          buy_in?: boolean;
           created_at?: string;
           email?: string;
           game_starts_on?: string;

@@ -45,24 +45,6 @@ export function HostForm() {
           <input {...inputProps("player_count", errors, values)} type="number" inputMode="numeric" min={1} max={5000} required />
         </Field>
       </div>
-      <fieldset className="sc-field-group" aria-describedby={errors.buy_in ? "buy_in-error" : undefined}>
-        <legend className="sc-label">Is there a buy-in?</legend>
-        <div className="sc-radios">
-          <label className="sc-radio">
-            <input type="radio" name="buy_in" value="yes" required defaultChecked={values.buy_in === "yes"} />
-            <span>Yes</span>
-          </label>
-          <label className="sc-radio">
-            <input type="radio" name="buy_in" value="no" defaultChecked={values.buy_in === "no"} />
-            <span>No</span>
-          </label>
-        </div>
-        {errors.buy_in && (
-          <p className="sc-error" id="buy_in-error">
-            {errors.buy_in}
-          </p>
-        )}
-      </fieldset>
 
       {formError && (
         <p className="sc-error" role="alert">

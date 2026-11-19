@@ -37,7 +37,6 @@ export interface HostApplication {
   school: string;
   game_starts_on: string; // YYYY-MM-DD
   player_count: number;
-  buy_in: boolean;
 }
 export type HostField = keyof HostApplication;
 
@@ -85,8 +84,6 @@ export function parseHostApplication(fd: FormData): Parsed<HostApplication, Host
     errors.player_count = "Enter a number of players (1–5000).";
   }
 
-  const buyInRaw = text(fd, "buy_in");
-  if (buyInRaw !== "yes" && buyInRaw !== "no") errors.buy_in = "Pick yes or no.";
 
   if (Object.keys(errors).length) return { ok: false, errors };
   return {
@@ -98,7 +95,6 @@ export function parseHostApplication(fd: FormData): Parsed<HostApplication, Host
       school,
       game_starts_on: game_starts_on!,
       player_count,
-      buy_in: buyInRaw === "yes",
     },
   };
 }
