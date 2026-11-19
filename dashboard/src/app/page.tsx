@@ -55,7 +55,8 @@ export default function LaunchPage() {
                 Run your school&apos;s Senior Assassin game?
               </h2>
               <p className="sc-text">
-                Get a founding host spot: 20% of every sale to you, 10% into your pot, and a discount for your players.
+                Become a founding host. You get a cut of every sale from your school, and your players get a discount. Zero
+                work: we ship everything to you in one box.
               </p>
             </div>
             <div className="sc-card sc-apply__card">

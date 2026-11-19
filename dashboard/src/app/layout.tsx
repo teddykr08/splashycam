@@ -6,10 +6,10 @@ const display = Fredoka({ variable: "--font-display", subsets: ["latin"], weight
 const body = Nunito({ variable: "--font-body", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Splashy Cam · Launching January",
-  description: "A phone mount for any water gun. Film your kills hands free. Launching January.",
+  title: "Splashy Cam",
+  description: "A phone mount for any water gun. Film your kills hands free.",
   openGraph: {
-    title: "Splashy Cam · Launching January",
+    title: "Splashy Cam",
     description: "A phone mount for any water gun. Film your kills hands free.",
   },
 };

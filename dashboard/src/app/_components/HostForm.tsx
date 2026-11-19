@@ -70,7 +70,7 @@ export function HostForm() {
         </p>
       )}
       <button className="sc-btn sc-btn--wide" type="submit" disabled={pending}>
-        {pending ? "Sending…" : "Apply for a founding spot"}
+        {pending ? "Sending…" : "Get your school's spot"}
       </button>
     </form>
   );
