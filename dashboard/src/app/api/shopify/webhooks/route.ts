@@ -14,8 +14,9 @@ import { cancelOrder, recordOrder } from "@/lib/orders";
 import { parseOrder, verifyShopifyHmac, type ShopifyOrder } from "@/lib/shopify";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+// No route segment config: cacheComponents rejects `runtime` and `dynamic`.
+// Route handlers run on Node by default (needed for node:crypto), and reading
+// the request body already keeps this route dynamic.
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
