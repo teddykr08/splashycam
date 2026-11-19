@@ -114,6 +114,34 @@
     }
   }
 
+  /* Form fields for the splashy forms (launch signup, host application). */
+  .sc-field {
+    width: 100%;
+    min-height: 52px;
+    padding: 10px 18px;
+    border: var(--sc-outline) solid var(--sc-ink);
+    border-radius: 16px;
+    background: #fff;
+    color: var(--sc-ink);
+    font: inherit;
+    font-size: 1.0625rem;
+  }
+
+  .sc-field:focus-visible {
+    outline: 3px solid var(--sc-sky);
+    outline-offset: 2px;
+  }
+
+  .sc-field[aria-invalid='true'] {
+    border-color: #c62828;
+  }
+
+  .sc-form-error {
+    margin: 0;
+    color: #b71c1c;
+    font-weight: 600;
+  }
+
   /* A labeled stand-in for a logo, illustration or video until a real one is picked. */
   .sc-placeholder {
     display: grid;

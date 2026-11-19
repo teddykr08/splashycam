@@ -1,0 +1,263 @@
+{% comment %}
+  Section contract.
+  Pre-launch page (password template): founding host pitch and application.
+  The form is Shopify's contact form, so each application is emailed to the
+  store's sender email. If "External form link" is set, a button to that form
+  replaces the built-in one.
+  @example
+  <!-- Password page > Splashy host application -->
+{% endcomment %}
+
+{% render 'splashy-ui-styles' %}
+
+<div class="sc-section sc-apply" id="founding-hosts">
+  <div class="sc-wrap sc-apply__wrap">
+    <div class="sc-apply__pitch">
+      {%- if section.settings.kicker != blank -%}
+        <p class="sc-kicker">{{ section.settings.kicker | escape }}</p>
+      {%- endif -%}
+      <h2 class="sc-title sc-apply__title">{{ section.settings.heading | escape }}</h2>
+      {%- if section.settings.text != blank -%}
+        <div class="sc-text sc-apply__text">{{ section.settings.text }}</div>
+      {%- endif -%}
+    </div>
+
+    <div class="sc-card sc-apply__card">
+      {%- if section.settings.external_form_url != blank -%}
+        <a class="sc-btn sc-apply__submit" href="{{ section.settings.external_form_url }}" target="_blank" rel="noopener">
+          {{- section.settings.button_label | escape -}}
+        </a>
+      {%- else -%}
+        {%- form 'contact', id: 'SplashyHostApply', class: 'sc-apply__form' -%}
+          {%- if form.posted_successfully? -%}
+            <p class="sc-apply__done" role="status">{{ section.settings.success_text | escape }}</p>
+          {%- else -%}
+            <input type="hidden" name="contact[Form]" value="Founding host application">
+
+            <div class="sc-apply__field">
+              <label for="HostName">Your name</label>
+              <input class="sc-field" id="HostName" name="contact[Name]" autocomplete="name" required>
+            </div>
+            <div class="sc-apply__field">
+              <label for="HostEmail">Email</label>
+              <input
+                class="sc-field"
+                id="HostEmail"
+                type="email"
+                name="contact[email]"
+                autocomplete="email"
+                autocapitalize="off"
+                spellcheck="false"
+                required
+                {% if form.errors contains 'email' %}
+                  aria-invalid="true" aria-describedby="HostApplyError"
+                {% endif %}
+              >
+            </div>
+            <div class="sc-apply__field">
+              <label for="HostInstagram">Instagram handle</label>
+              <input
+                class="sc-field"
+                id="HostInstagram"
+                name="contact[Instagram]"
+                placeholder="@yourhandle"
+                autocapitalize="off"
+                spellcheck="false"
+                required
+              >
+            </div>
+            <div class="sc-apply__field">
+              <label for="HostSchool">School</label>
+              <input class="sc-field" id="HostSchool" name="contact[School]" autocomplete="organization" required>
+            </div>
+            <div class="sc-apply__pair">
+              <div class="sc-apply__field">
+                <label for="HostStart">Game start date</label>
+                <input class="sc-field" id="HostStart" type="date" name="contact[Game start date]" required>
+              </div>
+              <div class="sc-apply__field">
+                <label for="HostPlayers">Rough player count</label>
+                <input
+                  class="sc-field"
+                  id="HostPlayers"
+                  type="number"
+                  inputmode="numeric"
+                  min="1"
+                  max="5000"
+                  name="contact[Player count]"
+                  required
+                >
+              </div>
+            </div>
+            <fieldset class="sc-apply__field sc-apply__radios">
+              <legend>Is there a buy-in?</legend>
+              <label class="sc-apply__radio">
+                <input type="radio" name="contact[Buy-in]" value="Yes" required>
+                <span>Yes</span>
+              </label>
+              <label class="sc-apply__radio">
+                <input type="radio" name="contact[Buy-in]" value="No">
+                <span>No</span>
+              </label>
+            </fieldset>
+
+            {%- if form.errors -%}
+              <p class="sc-form-error" id="HostApplyError" role="alert">
+                {%- if form.errors contains 'email' -%}
+                  Check your email address and try again.
+                {%- else -%}
+                  Something went wrong. Try again.
+                {%- endif -%}
+              </p>
+            {%- endif -%}
+
+            <button class="sc-btn sc-apply__submit" type="submit">{{ section.settings.button_label | escape }}</button>
+          {%- endif -%}
+        {%- endform -%}
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .sc-apply {
+    background: var(--sc-sky);
+    border-block: var(--sc-outline) solid var(--sc-ink);
+  }
+
+  .sc-apply__wrap {
+    display: grid;
+    gap: 28px;
+    max-width: 640px;
+  }
+
+  .sc-apply__pitch {
+    min-width: 0;
+    text-align: center;
+  }
+
+  .sc-apply__title {
+    font-size: clamp(1.75rem, 7vw, 2.75rem);
+  }
+
+  .sc-apply__text p {
+    margin: 0;
+  }
+
+  .sc-apply__card {
+    background: var(--sc-cream);
+  }
+
+  .sc-apply__form {
+    display: grid;
+    gap: 16px;
+  }
+
+  .sc-apply__field {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .sc-apply__field > label,
+  .sc-apply__field > legend {
+    padding: 0;
+    font-family: var(--sc-display);
+    font-weight: 600;
+  }
+
+  .sc-apply__pair {
+    display: grid;
+    gap: 16px;
+  }
+
+  .sc-apply__radios {
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 12px;
+  }
+
+  .sc-apply__radios > legend {
+    margin-block-end: 6px;
+  }
+
+  .sc-apply__radio {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 52px;
+    padding: 0 16px;
+    border: var(--sc-outline) solid var(--sc-ink);
+    border-radius: 16px;
+    background: #fff;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .sc-apply__radio:has(input:checked) {
+    background: var(--sc-orange);
+  }
+
+  .sc-apply__radio input {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--sc-ink);
+  }
+
+  .sc-apply__submit {
+    width: 100%;
+    margin-block-start: 4px;
+  }
+
+  .sc-apply__done {
+    margin: 0;
+    font-family: var(--sc-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  @media (min-width: 560px) {
+    .sc-apply__pair {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Splashy host application",
+  "class": "sc-apply-section",
+  "settings": [
+    { "type": "text", "id": "kicker", "label": "Small label", "default": "Founding hosts" },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Run your school's Senior Assassin game?"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>Get a founding host spot: 20% of every sale to you, 10% into your pot, and a discount for your players.</p>"
+    },
+    { "type": "text", "id": "button_label", "label": "Button text", "default": "Apply for a founding spot" },
+    {
+      "type": "text",
+      "id": "success_text",
+      "label": "After applying",
+      "default": "Got it! We'll DM you on Instagram soon."
+    },
+    {
+      "type": "url",
+      "id": "external_form_url",
+      "label": "External form link",
+      "info": "Leave blank to use the built-in form (emails you each application). If set, the button opens this form instead."
+    }
+  ],
+  "presets": [{ "name": "Splashy host application" }]
+}
+{% endschema %}

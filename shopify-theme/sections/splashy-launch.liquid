@@ -1,0 +1,246 @@
+{% comment %}
+  Section contract.
+  Pre-launch page (password template), top part: logo (or a labeled placeholder),
+  the one-line pitch, a looping muted video, the launch line and an email signup.
+  The signup uses Shopify's customer form, so emails land in Shopify customers
+  tagged "prelaunch" with email marketing on.
+  @example
+  <!-- Password page > Splashy launch. Upload the clip in the section settings. -->
+{% endcomment %}
+
+{% render 'splashy-ui-styles' %}
+
+<div class="sc-section sc-launch">
+  <div class="sc-wrap sc-launch__wrap">
+    <div class="sc-launch__logo">
+      {%- if settings.logo != blank -%}
+        {{
+          settings.logo
+          | image_url: width: 480
+          | image_tag:
+            alt: shop.name,
+            widths: '240, 360, 480',
+            sizes: '240px',
+            class: 'sc-launch__logo-img',
+            loading: 'eager',
+            fetchpriority: 'high'
+        }}
+      {%- else -%}
+        {% render 'splashy-placeholder', label: 'Your logo', hint: 'Theme settings > Logo' %}
+      {%- endif -%}
+    </div>
+
+    <h1 class="sc-title sc-launch__pitch">{{ section.settings.pitch | escape }}</h1>
+
+    <div class="sc-card sc-launch__video">
+      {%- if section.settings.video != blank -%}
+        {{
+          section.settings.video
+          | video_tag:
+            autoplay: true,
+            loop: true,
+            muted: true,
+            playsinline: true,
+            controls: false,
+            preload: 'metadata',
+            image_size: '1080x',
+            class: 'sc-launch__video-el'
+        }}
+      {%- else -%}
+        {% render 'splashy-placeholder', label: 'Your clip', hint: 'Upload a video in this section' %}
+      {%- endif -%}
+    </div>
+
+    <div class="sc-launch__signup">
+      <h2 class="sc-launch__when">{{ section.settings.launch_line | escape }}</h2>
+      {%- if section.settings.signup_text != blank -%}
+        <p class="sc-text sc-launch__sub">{{ section.settings.signup_text | escape }}</p>
+      {%- endif -%}
+
+      {%- form 'customer', id: 'SplashyLaunchSignup', class: 'sc-launch__form' -%}
+        <input type="hidden" name="contact[tags]" value="prelaunch,newsletter">
+        <input type="hidden" name="contact[accepts_marketing]" value="true">
+        {%- if form.posted_successfully? -%}
+          <p class="sc-launch__done" role="status">{{ section.settings.success_text | escape }}</p>
+        {%- else -%}
+          <div class="sc-launch__row">
+            <label class="visually-hidden" for="SplashyLaunchEmail">Email</label>
+            <input
+              class="sc-field"
+              id="SplashyLaunchEmail"
+              type="email"
+              name="contact[email]"
+              autocomplete="email"
+              autocapitalize="off"
+              spellcheck="false"
+              placeholder="Your email"
+              required
+              {% if form.errors contains 'email' %}
+                aria-invalid="true" aria-describedby="SplashyLaunchError"
+              {% endif %}
+            >
+            <button class="sc-btn sc-launch__btn" type="submit">{{ section.settings.button_label | escape }}</button>
+          </div>
+          {%- if form.errors -%}
+            <p class="sc-form-error" id="SplashyLaunchError" role="alert">
+              {%- if form.errors contains 'email' -%}
+                Check that email and try again.
+              {%- else -%}
+                Something went wrong. Try again.
+              {%- endif -%}
+            </p>
+          {%- endif -%}
+        {%- endif -%}
+      {%- endform -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .sc-launch {
+    padding-block-start: clamp(24px, 6vw, 56px);
+    background:
+      radial-gradient(circle at 10% 12%, color-mix(in srgb, var(--sc-sky) 25%, transparent) 0 110px, transparent 111px),
+      radial-gradient(circle at 92% 70%, color-mix(in srgb, var(--sc-orange) 22%, transparent) 0 90px, transparent 91px),
+      var(--sc-cream);
+  }
+
+  .sc-launch__wrap {
+    display: grid;
+    justify-items: center;
+    gap: 24px;
+    max-width: 640px;
+    text-align: center;
+  }
+
+  .sc-launch__logo {
+    width: 180px;
+    height: 64px;
+  }
+
+  .sc-launch__logo .sc-placeholder {
+    min-height: 0;
+    padding: 4px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+  }
+
+  .sc-launch__logo-img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: 64px;
+    margin-inline: auto;
+    object-fit: contain;
+  }
+
+  .sc-launch__pitch {
+    margin: 0;
+    font-size: clamp(1.75rem, 7.5vw, 3rem);
+  }
+
+  .sc-launch__video {
+    aspect-ratio: 9 / 16;
+    width: min(78%, 340px);
+    padding: 0;
+    overflow: hidden;
+    rotate: -1.5deg;
+  }
+
+  .sc-launch__video .sc-placeholder {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .sc-launch__video-el {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .sc-launch__signup {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    margin-block-start: 8px;
+  }
+
+  .sc-launch__when {
+    margin: 0;
+    font-family: var(--sc-display);
+    font-size: clamp(2rem, 9vw, 3.25rem);
+    font-weight: 700;
+    line-height: 1;
+    text-shadow: 3px 3px 0 var(--sc-orange);
+  }
+
+  .sc-launch__sub {
+    margin: 0;
+  }
+
+  .sc-launch__form {
+    width: 100%;
+  }
+
+  .sc-launch__row {
+    display: grid;
+    gap: 12px;
+  }
+
+  .sc-launch__btn {
+    width: 100%;
+  }
+
+  .sc-launch__done {
+    margin: 0;
+    padding: 14px 18px;
+    border: var(--sc-outline) solid var(--sc-ink);
+    border-radius: 999px;
+    background: var(--sc-sky);
+    font-family: var(--sc-display);
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+
+  @media (min-width: 560px) {
+    .sc-launch__row {
+      grid-template-columns: 1fr auto;
+    }
+
+    .sc-launch__btn {
+      width: auto;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Splashy launch",
+  "class": "sc-launch-section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "The logo comes from Theme settings > Logo. Until then a labeled placeholder shows."
+    },
+    {
+      "type": "text",
+      "id": "pitch",
+      "label": "One-line pitch",
+      "default": "A phone mount for any water gun. Film your kills hands free."
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "Clip",
+      "info": "Plays muted on a loop. A tall (9:16) video fits best."
+    },
+    { "type": "header", "content": "Email signup" },
+    { "type": "text", "id": "launch_line", "label": "Launch line", "default": "Launching January." },
+    { "type": "text", "id": "signup_text", "label": "Text", "default": "Get one email when it drops." },
+    { "type": "text", "id": "button_label", "label": "Button text", "default": "Notify me" },
+    { "type": "text", "id": "success_text", "label": "After signing up", "default": "You're on the list. See you in January!" }
+  ],
+  "presets": [{ "name": "Splashy launch" }]
+}
+{% endschema %}
