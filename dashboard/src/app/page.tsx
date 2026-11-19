@@ -5,7 +5,7 @@ import { WaitlistForm } from "./_components/WaitlistForm";
 
 // Drop these into dashboard/public/ and redeploy. Until then, labeled placeholders show.
 const CLIP = "launch-clip.mp4"; // tall 9:16 works best; plays muted on a loop
-const LOGO = "logo.png";
+const LOGO = "logo.jpg"; // square works; transparent PNG also fine (change this name)
 const INSTAGRAM = "splashycam.shop";
 
 const inPublic = (file: string) => existsSync(path.join(process.cwd(), "public", file));
