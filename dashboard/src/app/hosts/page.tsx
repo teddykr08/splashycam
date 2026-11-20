@@ -23,8 +23,8 @@ export default function HostsPage() {
             <h1 className="sc-title sc-pitch">Run your school&apos;s Senior Assassin game?</h1>
             <p className="sc-hosts__sub">Become a Splashy Cam affiliate.</p>
             <p className="sc-text sc-hosts__lead">
-              You&apos;re the most direct line to your players. Get a cut of every sale you bring in, with zero work on your
-              end.
+              You&apos;re the most direct line to your players. Get a cut of every sale you bring in, plus more ways to earn
+              down the line. You get out of it as much as you put in.
             </p>
 
             <Clip small />
