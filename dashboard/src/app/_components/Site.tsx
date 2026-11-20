@@ -4,18 +4,20 @@ import Link from "next/link";
 
 // Files in dashboard/public/. Until they exist, labeled placeholders show.
 export const CLIP = "launch-clip.mp4"; // tall 9:16 works best; plays muted on a loop
-export const LOGO = "logo.jpg";
+// Header logo: logo.png if present (e.g. a transparent one), else logo.jpg, else a placeholder.
+export const LOGO_FILES = ["logo.png", "logo.jpg"] as const;
 export const INSTAGRAM = "splashycam.shop";
 
 const inPublic = (file: string) => existsSync(path.join(process.cwd(), "public", file));
 
 export function Logo({ href }: { href?: string }) {
-  const img = inPublic(LOGO) ? (
+  const logo = LOGO_FILES.find(inPublic);
+  const img = logo ? (
     // A plain img keeps any logo size/format working without config.
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={`/${LOGO}`} alt="Splashy Cam" className="sc-logo__img" />
+    <img src={`/${logo}`} alt="Splashy Cam" className="sc-logo__img" />
   ) : (
-    <Placeholder label="Your logo" hint={`dashboard/public/${LOGO}`} />
+    <Placeholder label="Your logo" hint="dashboard/public/logo.png" />
   );
   return (
     <div className="sc-logo">
