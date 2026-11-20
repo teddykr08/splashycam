@@ -35,7 +35,8 @@ export interface HostApplication {
   email: string;
   instagram: string;
   school: string;
-  game_starts_on: string; // YYYY-MM-DD
+  game_starts_on: string; // YYYY-MM-DD, an estimate
+  game_ends_on: string; // YYYY-MM-DD, an estimate; on or after game_starts_on
   player_count: number;
 }
 export type HostField = keyof HostApplication;
@@ -60,6 +61,31 @@ export function parseDate(raw: string): string | null {
   return real && y >= 2025 && y <= 2035 ? m[0] : null;
 }
 
+export const DATE_MESSAGES = {
+  start: "Add an estimated start date (a rough guess is fine).",
+  end: "Add an estimated end date (a rough guess is fine).",
+  order: "The end date can't be before the start date.",
+} as const;
+
+/**
+ * Both game dates are required estimates, and the end is on or after the start.
+ * Shared by the form (in the browser) and the server action, so both say the same thing.
+ */
+export function checkGameDates(startRaw: string, endRaw: string): {
+  start: string | null;
+  end: string | null;
+  errors: FieldErrors<"game_starts_on" | "game_ends_on">;
+} {
+  const start = parseDate(startRaw);
+  const end = parseDate(endRaw);
+  const errors: FieldErrors<"game_starts_on" | "game_ends_on"> = {};
+  if (!start) errors.game_starts_on = DATE_MESSAGES.start;
+  if (!end) errors.game_ends_on = DATE_MESSAGES.end;
+  // YYYY-MM-DD strings compare correctly as text.
+  if (start && end && end < start) errors.game_ends_on = DATE_MESSAGES.order;
+  return { start, end, errors };
+}
+
 export function parseHostApplication(fd: FormData): Parsed<HostApplication, HostField> {
   const errors: FieldErrors<HostField> = {};
 
@@ -75,8 +101,8 @@ export function parseHostApplication(fd: FormData): Parsed<HostApplication, Host
   const school = text(fd, "school");
   if (school.length < 1 || school.length > 120) errors.school = "Enter your school.";
 
-  const game_starts_on = parseDate(text(fd, "game_starts_on"));
-  if (!game_starts_on) errors.game_starts_on = "Pick the game's start date.";
+  const dates = checkGameDates(text(fd, "game_starts_on"), text(fd, "game_ends_on"));
+  Object.assign(errors, dates.errors);
 
   const playersRaw = text(fd, "player_count");
   const player_count = Number(playersRaw);
@@ -93,7 +119,8 @@ export function parseHostApplication(fd: FormData): Parsed<HostApplication, Host
       email: email!,
       instagram: instagram!,
       school,
-      game_starts_on: game_starts_on!,
+      game_starts_on: dates.start!,
+      game_ends_on: dates.end!,
       player_count,
     },
   };

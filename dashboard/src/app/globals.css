@@ -191,6 +191,20 @@ body {
   font-weight: 600;
 }
 
+.sc-label--small {
+  font-size: 0.95rem;
+}
+
+.sc-hint {
+  margin: -2px 0 4px;
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.sc-dates > legend {
+  margin-block-end: 2px;
+}
+
 .sc-error {
   margin: 0;
   color: #b71c1c;

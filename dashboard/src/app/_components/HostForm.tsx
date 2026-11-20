@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, type ReactNode } from "react";
+import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import { applyAsHost, type HostState } from "../actions";
-import type { HostField } from "@/lib/launch";
+import { checkGameDates, type HostField } from "@/lib/launch";
 import { Honeypot } from "./WaitlistForm";
 
 const initial: HostState = { status: "idle" };
@@ -37,14 +37,10 @@ export function HostForm() {
       <Field id="school" label="School" error={errors.school}>
         <input {...inputProps("school", errors, values)} autoComplete="organization" required maxLength={120} />
       </Field>
-      <div className="sc-pair">
-        <Field id="game_starts_on" label="Game start date" error={errors.game_starts_on}>
-          <input {...inputProps("game_starts_on", errors, values)} type="date" required />
-        </Field>
-        <Field id="player_count" label="Rough player count" error={errors.player_count}>
-          <input {...inputProps("player_count", errors, values)} type="number" inputMode="numeric" min={1} max={5000} required />
-        </Field>
-      </div>
+      <GameDates errors={errors} values={values} />
+      <Field id="player_count" label="Rough player count" error={errors.player_count}>
+        <input {...inputProps("player_count", errors, values)} type="number" inputMode="numeric" min={1} max={5000} required />
+      </Field>
 
       {formError && (
         <p className="sc-error" role="alert">
@@ -58,7 +54,54 @@ export function HostForm() {
   );
 }
 
-function inputProps(id: HostField, errors: Partial<Record<HostField, string>>, values: Partial<Record<HostField, string>>) {
+type Errors = Partial<Record<HostField, string>>;
+type Values = Partial<Record<HostField, string>>;
+
+/**
+ * Estimated start and end dates. Both required; the end date can't be before the start.
+ * The browser blocks the submit with the same messages the server returns
+ * (checkGameDates), and the end picker can't go earlier than the start.
+ */
+function GameDates({ errors, values }: { errors: Errors; values: Values }) {
+  const startRef = useRef<HTMLInputElement>(null);
+  const endRef = useRef<HTMLInputElement>(null);
+  const [start, setStart] = useState(values.game_starts_on ?? "");
+
+  const validate = () => {
+    const s = startRef.current;
+    const e = endRef.current;
+    if (!s || !e) return;
+    const { errors: dateErrors } = checkGameDates(s.value, e.value);
+    s.setCustomValidity(dateErrors.game_starts_on ?? "");
+    e.setCustomValidity(dateErrors.game_ends_on ?? "");
+    setStart(s.value);
+  };
+  useEffect(validate, []);
+
+  return (
+    <fieldset className="sc-field-group sc-dates">
+      <legend className="sc-label">Game dates</legend>
+      <p className="sc-hint">Estimates are fine. Your best guess works.</p>
+      <div className="sc-pair">
+        <Field id="game_starts_on" label="Estimated start date" error={errors.game_starts_on} small>
+          <input {...inputProps("game_starts_on", errors, values)} ref={startRef} type="date" required onChange={validate} />
+        </Field>
+        <Field id="game_ends_on" label="Estimated end date" error={errors.game_ends_on} small>
+          <input
+            {...inputProps("game_ends_on", errors, values)}
+            ref={endRef}
+            type="date"
+            required
+            min={start || undefined}
+            onChange={validate}
+          />
+        </Field>
+      </div>
+    </fieldset>
+  );
+}
+
+function inputProps(id: HostField, errors: Errors, values: Values) {
   return {
     id,
     defaultValue: values[id],
@@ -69,10 +112,22 @@ function inputProps(id: HostField, errors: Partial<Record<HostField, string>>, v
   } as const;
 }
 
-function Field({ id, label, error, children }: { id: HostField; label: string; error?: string; children: ReactNode }) {
+function Field({
+  id,
+  label,
+  error,
+  small = false,
+  children,
+}: {
+  id: HostField;
+  label: string;
+  error?: string;
+  small?: boolean;
+  children: ReactNode;
+}) {
   return (
     <div className="sc-field-group">
-      <label className="sc-label" htmlFor={id}>
+      <label className={small ? "sc-label sc-label--small" : "sc-label"} htmlFor={id}>
         {label}
       </label>
       {children}

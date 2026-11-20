@@ -58,6 +58,7 @@ export type Database = {
           created_at: string;
           email: string;
           game_starts_on: string;
+          game_ends_on: string | null;
           id: string;
           instagram: string;
           name: string;
@@ -68,6 +69,7 @@ export type Database = {
           created_at?: string;
           email: string;
           game_starts_on: string;
+          game_ends_on?: string | null;
           id?: string;
           instagram: string;
           name: string;
@@ -78,6 +80,7 @@ export type Database = {
           created_at?: string;
           email?: string;
           game_starts_on?: string;
+          game_ends_on?: string | null;
           id?: string;
           instagram?: string;
           name?: string;

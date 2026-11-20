@@ -14,7 +14,7 @@ export type HostState =
   | { status: "idle" | "done" }
   | { status: "error"; message: string; errors?: FieldErrors<HostField>; values?: Partial<Record<HostField, string>> };
 
-const HOST_FIELDS: HostField[] = ["name", "email", "instagram", "school", "game_starts_on", "player_count"];
+const HOST_FIELDS: HostField[] = ["name", "email", "instagram", "school", "game_starts_on", "game_ends_on", "player_count"];
 /** What the person typed, so the form can refill after an error (React resets forms after an action). */
 const typed = (fd: FormData) =>
   Object.fromEntries(HOST_FIELDS.map((k) => [k, String(fd.get(k) ?? "").slice(0, 200)])) as Partial<Record<HostField, string>>;
