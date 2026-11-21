@@ -110,6 +110,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      host_leads: {
+        Row: {
+          created_at: string;
+          email: string | null;
+          id: string;
+          instagram: string;
+          name: string | null;
+          note: string | null;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          instagram: string;
+          name?: string | null;
+          note?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          instagram?: string;
+          name?: string | null;
+          note?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       hosts: {
         Row: {
           code: string;
@@ -274,7 +307,25 @@ export type Database = {
         ];
       };
     };
-    Views: { [_ in never]: never };
+    Views: {
+      host_pipeline: {
+        Row: {
+          dm_at: string | null;
+          dm_status: string | null;
+          email: string | null;
+          filled_form: boolean | null;
+          form_at: string | null;
+          game_ends_on: string | null;
+          game_starts_on: string | null;
+          instagram: string | null;
+          name: string | null;
+          player_count: number | null;
+          school: string | null;
+          source: string | null;
+        };
+        Relationships: [];
+      };
+    };
     Functions: { [_ in never]: never };
     Enums: {
       box_status: "open" | "shipped" | "expired";
