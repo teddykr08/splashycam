@@ -13,7 +13,7 @@ export function HostForm() {
   if (state.status === "done") {
     return (
       <p className="sc-done" role="status">
-        Got it! We&apos;ll DM you on Instagram soon.
+        you&apos;re in. we&apos;ll DM you on instagram soon.
       </p>
     );
   }

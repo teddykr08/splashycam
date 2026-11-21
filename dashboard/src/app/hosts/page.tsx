@@ -4,13 +4,13 @@ import { HostForm } from "../_components/HostForm";
 
 // /hosts is the public affiliate signup. (/host is reserved for the future host dashboard.)
 // Keep the copy vague: no percentages, prices, payout methods, boxes, discounts or pot.
+const TITLE = "Become a Splashy Cam affiliate";
+const DESCRIPTION = "Run your school's Senior Assassin game? Get a cut of every sale you bring in. Free to join.";
 export const metadata: Metadata = {
-  title: "Splashy Cam affiliates",
-  description: "Run your school's Senior Assassin game? Become a Splashy Cam affiliate.",
-  openGraph: {
-    title: "Splashy Cam affiliates",
-    description: "Run your school's Senior Assassin game? Become a Splashy Cam affiliate.",
-  },
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: { type: "website", siteName: "Splashy Cam", url: "/hosts", title: TITLE, description: DESCRIPTION },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
 
 const STEPS = [
@@ -76,7 +76,6 @@ export default function HostsPage() {
             </section>
 
             <div className="sc-card sc-hosts__card" id="signup">
-              <h2 className="sc-hosts__formtitle">Sign up below</h2>
               <HostForm />
             </div>
 

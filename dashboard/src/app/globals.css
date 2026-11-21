@@ -229,6 +229,8 @@ body {
   width: 1px;
   height: 1px;
   overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* ---- page layout (both pages) ---- */
@@ -354,6 +356,36 @@ body {
   .sc-waitlist .sc-error {
     grid-column: 1 / -1;
   }
+}
+
+.sc-points {
+  display: grid;
+  gap: 8px;
+  margin: -4px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: start;
+}
+
+.sc-points li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.sc-points li::before {
+  content: "✓";
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--sc-ink);
+  border-radius: 50%;
+  background: var(--sc-sky);
+  font-size: 0.85rem;
 }
 
 /* ---- "/hosts" ---- */

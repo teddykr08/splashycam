@@ -41,13 +41,18 @@ export interface HostApplication {
 }
 export type HostField = keyof HostApplication;
 
-/** "@Some.Handle" or "instagram.com/some.handle/" → "Some.Handle". */
+/**
+ * Accepts a handle with or without "@", stray spaces, or a full profile URL
+ * ("https://www.instagram.com/some.handle/?hl=en", "instagram.com/some.handle")
+ * and returns just "some.handle" (case kept), or null if it isn't a valid handle.
+ */
 export function parseInstagram(raw: string): string | null {
   const handle = raw
-    .trim()
-    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
-    .replace(/^@/, "")
-    .replace(/\/+$/, "");
+    .replace(/\s+/g, "")
+    .replace(/^(https?:\/\/)?(www\.|m\.)?instagram\.com\//i, "")
+    .replace(/[?#].*$/, "")
+    .replace(/\/+$/, "")
+    .replace(/^@+/, "");
   return INSTAGRAM.test(handle) ? handle : null;
 }
 

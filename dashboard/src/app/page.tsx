@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Clip, Footer, Logo } from "./_components/Site";
 import { WaitlistForm } from "./_components/WaitlistForm";
 
+const POINTS = ["clips onto your water gun in seconds", "both hands free, phone stays steady", "proof nobody can argue with"];
+
 // "/" is about the mount only. Affiliates have their own page at /hosts.
 export default function ProductPage() {
   return (
@@ -15,6 +17,11 @@ export default function ProductPage() {
             </Link>
 
             <h1 className="sc-title sc-pitch">A phone mount for any water gun. Film your kills hands free.</h1>
+            <ul className="sc-points">
+              {POINTS.map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ul>
 
             <Clip />
 

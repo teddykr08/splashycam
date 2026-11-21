@@ -30,10 +30,15 @@ describe("instagram", () => {
     expect(parseInstagram("@splashycam.shop")).toBe("splashycam.shop");
     expect(parseInstagram("https://www.instagram.com/some_one/")).toBe("some_one");
     expect(parseInstagram("plain")).toBe("plain");
+    expect(parseInstagram("  @ some_one  ")).toBe("some_one");
+    expect(parseInstagram("instagram.com/some_one")).toBe("some_one");
+    expect(parseInstagram("www.instagram.com/some.one/?hl=en")).toBe("some.one");
+    expect(parseInstagram("https://m.instagram.com/some.one#top")).toBe("some.one");
+    expect(parseInstagram("@@doubled")).toBe("doubled");
   });
 
   it("rejects spaces, symbols and too-long handles", () => {
-    expect(parseInstagram("two words")).toBeNull();
+    expect(parseInstagram("two words")).toBe("twowords"); // spaces are stripped
     expect(parseInstagram("<script>")).toBeNull();
     expect(parseInstagram("a".repeat(31))).toBeNull();
     expect(parseInstagram("@")).toBeNull();
@@ -82,7 +87,7 @@ describe("host application", () => {
 
   it("reports every bad field at once", () => {
     const r = parseHostApplication(
-      form({ name: "", email: "x", instagram: "no spaces", school: "", game_starts_on: "soon", game_ends_on: "", player_count: "lots" }),
+      form({ name: "", email: "x", instagram: "<bad>", school: "", game_starts_on: "soon", game_ends_on: "", player_count: "lots" }),
     );
     expect(r.ok).toBe(false);
     if (!r.ok) {
