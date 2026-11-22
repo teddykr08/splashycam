@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Footer, Logo } from "../_components/Site";
+import { Clip, Footer, INSTAGRAM, Logo } from "../_components/Site";
 import { HostForm } from "../_components/HostForm";
 
 // /hosts is the public affiliate signup. (/host is reserved for the future host dashboard.)
 // Keep the copy vague: no percentages, prices, payout methods, boxes, discounts or pot.
 const TITLE = "Become a Splashy Cam affiliate";
-const DESCRIPTION = "Run your school's Senior Assassin game? Sign up to share Splashy Cam with your players.";
+const DESCRIPTION = "Run your school's Senior Assassin game? Get a cut of every sale you bring in. Free to join.";
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
@@ -14,15 +14,21 @@ export const metadata: Metadata = {
 };
 
 const STEPS = [
-  { title: "Introduce your game.", text: "Tell us which school you host and when you play." },
-  { title: "Get your affiliate link.", text: "Use it to introduce players to Splashy Cam." },
-  { title: "Share with your school.", text: "Post your link in a story or your game group chat." },
+  { title: "sign up below", text: "takes a minute." },
+  { title: "get your own link", text: "share it with your players." },
+  { title: "earn a cut", text: "of every order that comes through it." },
 ];
 
-const FAQ = [
-  { q: "Who can sign up?", a: "Hosts who run their school’s Senior Assassin game." },
-  { q: "Can I join if our game has started?", a: "Yes. Include your game dates in the signup form." },
-  { q: "When does Splashy Cam launch?", a: "January." },
+const FAQ: { q: string; a: string }[] = [
+  { q: "is this a scam?", a: "no. it's free, you never pay or buy anything. you just share a link." },
+  { q: "does it cost anything?", a: "nothing, ever." },
+  {
+    q: "what do i actually do?",
+    a: "share your link with your players however you want (story, post, group chat). how much you share is up to you.",
+  },
+  { q: "how do i get paid?", a: "you get a cut of every sale through your link. we'll send you the details once you're approved." },
+  { q: "when does it launch?", a: "january." },
+  { q: "our game already started, can i still join?", a: "yes. that's why we ask for your dates." },
 ];
 
 export default function HostsPage() {
@@ -33,15 +39,27 @@ export default function HostsPage() {
           <div className="sc-wrap sc-stack">
             <Logo href="/" />
 
+            <ul className="sc-trust" aria-label="About Splashy Cam">
+              <li>
+                <a href={`https://www.instagram.com/${INSTAGRAM}/`} target="_blank" rel="noopener noreferrer">
+                  {`@${INSTAGRAM}`}
+                </a>
+              </li>
+              <li>free to join · no cost ever</li>
+            </ul>
+
             <h1 className="sc-title sc-pitch">Run your school&apos;s Senior Assassin game?</h1>
+            <p className="sc-hosts__sub">Become a Splashy Cam affiliate.</p>
             <p className="sc-text sc-hosts__lead">
-              Become a Splashy Cam affiliate and introduce your players to the phone mount for hands-free game clips.
+              You&apos;re the most direct line to your players. Get a cut of every sale you bring in, plus more ways to earn
+              down the line. You get out of it as much as you put in.
             </p>
-            <a href="#signup" className="sc-btn">Sign up as a host</a>
+
+            <Clip small />
 
             <section className="sc-steps" aria-labelledby="how-title">
               <h2 className="sc-steps__title" id="how-title">
-                How it works
+                how it works
               </h2>
               <ol className="sc-steps__list">
                 {STEPS.map((step, i) => (
@@ -63,7 +81,7 @@ export default function HostsPage() {
 
             <section className="sc-faq" aria-labelledby="faq-title">
               <h2 className="sc-faq__title" id="faq-title">
-                Host questions
+                questions
               </h2>
               {FAQ.map(({ q, a }) => (
                 <details key={q} className="sc-faq__item">
