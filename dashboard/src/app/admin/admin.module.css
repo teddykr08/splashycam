@@ -1,0 +1,23 @@
+.page {
+  max-width: 54rem;
+  margin: auto;
+  padding: 2rem clamp(1rem, 5vw, 3rem) 4rem;
+  color: #17283e;
+  overflow-wrap: anywhere;
+}
+.page header { margin-bottom: 1.5rem; }
+.page h1 { font-size: clamp(2.2rem, 7vw, 3.6rem); line-height: 1.1; }
+.page h2 { margin: 1.6rem 0 .75rem; font-size: 1.6rem; }
+.page h3 { font-size: 1.2rem; font-weight: 800; }
+.page p { margin: .45rem 0; }
+.page .tag { display: inline-block; background: #b7e5ff; border-radius: 1rem; padding: .2rem .75rem; font-weight: 750; }
+.page nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
+.page article, .page form, .page section { margin-bottom: .75rem; background: #fffbef; border: 2px solid #22354b; border-radius: 1rem; padding: 1rem; }
+.page button { min-height: 44px; padding: .45rem .8rem; border: 2px solid #22354b; border-radius: .8rem; font: inherit; font-weight: 750; background: #ffab64; cursor: pointer; }
+.page nav button { background: #fff9e9; }
+.page nav button[aria-current] { background: #9ddcff; box-shadow: 0 2px #22354b; }
+.page label { display: grid; gap: .2rem; margin: .65rem 0; font-weight: 700; }
+.page input { width: 100%; padding: .65rem; background: white; border: 1px solid #526276; border-radius: .6rem; font: inherit; }
+.page summary, .page a { cursor: pointer; text-decoration: underline; text-underline-offset: .2em; }
+.page summary { padding: .65rem 0; }
+@media (max-width: 34rem) { .page nav { grid-template-columns: repeat(2, 1fr); } }
