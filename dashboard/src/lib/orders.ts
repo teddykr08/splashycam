@@ -2,7 +2,8 @@
  * What the order webhooks do to the database. Every step is safe to repeat:
  * Shopify can deliver the same webhook more than once.
  */
-import { BOX_FULL_AT, classifyOrder } from "./rules";
+import { randomInt } from "node:crypto";
+import { BOX_FULL_AT, classifyOrder, generatePickupCode, hostCutCents, orderPriceCents } from "./rules";
 import type { ParsedOrder } from "./shopify";
 import type { Json } from "./database.types";
 import type { Db } from "./supabase/admin";
@@ -11,7 +12,14 @@ const UNIQUE_VIOLATION = "23505";
 
 export type RecordResult =
   | { result: "duplicate" }
-  | { result: "recorded"; orderId: string; shipping: "box" | "alone"; boxId: string | null; flag: string | null };
+  | {
+      result: "recorded";
+      orderId: string;
+      shipping: "box" | "alone";
+      boxId: string | null;
+      flag: string | null;
+      pickupCode: string | null;
+    };
 
 /** orders/create: store the order, in its host's open box or as shipping alone. */
 export async function recordOrder(db: Db, parsed: ParsedOrder): Promise<RecordResult> {
@@ -28,37 +36,53 @@ export async function recordOrder(db: Db, parsed: ParsedOrder): Promise<RecordRe
     else flags.push("unknown_host_code");
   }
 
-  const { shipping, flag } = classifyOrder(parsed.delivery, hostId !== null);
-  if (flag) flags.push(flag);
+  const classified = classifyOrder(parsed.delivery, hostId !== null);
+  const shipping = classified.shipping;
+  if (classified.flag) flags.push(classified.flag);
+
+  // Paid amount should be quantity × unit price; anything else (old variant prices,
+  // discount codes) is worth a look.
+  if (parsed.paidCents !== orderPriceCents(parsed.units, parsed.delivery)) flags.push("unexpected_price");
 
   const boxId = shipping === "box" ? await openBoxFor(db, hostId!) : null;
+  const flag = flags.length ? flags.join(",") : null;
 
-  const inserted = await db
-    .from("orders")
-    .insert({
+  // Box orders get a pickup code for the handoff. Codes are unique; on the rare
+  // collision, draw a new one.
+  let inserted;
+  for (let attempt = 0; ; attempt++) {
+    const pickupCode = shipping === "box" ? generatePickupCode(randomInt) : null;
+    inserted = await db
+      .from("orders")
+      .insert({
       shopify_order_id: parsed.shopifyOrderId,
       host_id: hostId,
       box_id: boxId,
       shipping,
       units: parsed.units,
-      ship_alone_if_not_full: parsed.shipAloneIfNotFull,
       buyer_name: parsed.buyerName,
       buyer_email: parsed.buyerEmail,
       // A box ships to the host; only orders shipping alone need the buyer's address.
       ship_to: shipping === "alone" ? ((parsed.shipTo ?? null) as Json) : null,
       status: "charged",
       paid_cents: parsed.paidCents,
-      flag: flags.length ? flags.join(",") : null,
+      // Recorded now, owed only once the units count as delivered (rules.unitStatus).
+      host_cut_cents: hostCutCents(parsed.units, shipping, hostId !== null),
+      pickup_code: pickupCode,
+      flag,
     })
-    .select("id")
-    .single();
-  if (inserted.error) {
-    if (inserted.error.code === UNIQUE_VIOLATION) return { result: "duplicate" }; // same webhook, in parallel
-    throw inserted.error;
+      .select("id, pickup_code")
+      .single();
+    if (!inserted.error) break;
+    const err = inserted.error;
+    const codeTaken = err.code === UNIQUE_VIOLATION && /pickup_code/.test(`${err.message} ${err.details ?? ""}`);
+    if (codeTaken && attempt < 4) continue;
+    if (err.code === UNIQUE_VIOLATION && !codeTaken) return { result: "duplicate" }; // same webhook, in parallel
+    throw err;
   }
 
   if (boxId) await syncFilledAt(db, boxId);
-  return { result: "recorded", orderId: inserted.data.id, shipping, boxId, flag: flags.length ? flags.join(",") : null };
+  return { result: "recorded", orderId: inserted.data.id, shipping, boxId, flag, pickupCode: inserted.data.pickup_code };
 }
 
 export type CancelResult = { result: "not_found" } | { result: "cancelled"; boxId: string | null };

@@ -2,18 +2,17 @@
  * Shopify webhook helpers: signature check and order parsing. Pure functions,
  * no network or database, so they're unit-tested in shopify.test.ts.
  *
- * The mount is one product with two variant options, spelled exactly:
- *   Pack:     1 | 2 | 3 | 4
- *   Delivery: Ship to me | School box
- * The host code arrives as the cart attribute "host" (order.note_attributes),
- * set by the theme's splashy-host snippet. The checkbox arrives as a line item
- * property.
+ * The mount is one product with one option, spelled exactly:
+ *   Delivery: "School box" | "Ship to me"
+ * so a line's variant_title is "School box" or "Ship to me", and quantity is the
+ * number of units. Old two-option titles ("2 / School box") still parse during
+ * the switchover (units = pack × quantity) and are flagged "old_variant".
+ * The host code arrives as the cart attribute "host" (order.note_attributes).
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Delivery } from "./rules";
 
 export const HOST_ATTRIBUTE = "host";
-export const SHIP_ALONE_PROPERTY = "Ship mine alone if my box isn't full in 3 days";
 const DELIVERY_VALUES: Record<string, Delivery> = { "School box": "box", "Ship to me": "alone" };
 const HOST_CODE = /^[A-Z0-9-]{2,32}$/;
 
@@ -72,30 +71,33 @@ export interface ParsedOrder {
   units: number;
   delivery: Delivery;
   hostCode: string | null;
-  shipAloneIfNotFull: boolean;
   paidCents: number;
   buyerName: string;
   buyerEmail: string;
   shipTo: ShopifyAddress | null;
-  /** Problems worth the owner's attention, e.g. "check_items". */
+  /** Problems worth the owner's attention, e.g. "check_items", "old_variant". */
   flags: string[];
 }
 
-/** Reads "2 / School box" (any order of the two option values). */
-export function parseVariantTitle(title: string | null | undefined): { units: number; delivery: Delivery } | null {
+/**
+ * Reads a line's variant title: "School box" / "Ship to me" (pack 1), or an old
+ * two-option title like "2 / School box" (pack 2, old = true).
+ */
+export function parseVariantTitle(title: string | null | undefined): { pack: number; delivery: Delivery; old: boolean } | null {
   if (!title) return null;
   const parts = title.split(" / ").map((p) => p.trim());
-  const pack = parts.find((p) => /^[1-4]$/.test(p));
   const delivery = parts.map((p) => DELIVERY_VALUES[p]).find(Boolean);
-  if (!pack || !delivery) return null;
-  return { units: Number(pack), delivery };
+  if (!delivery) return null;
+  if (parts.length === 1) return { pack: 1, delivery, old: false };
+  const pack = parts.find((p) => /^[1-4]$/.test(p));
+  return pack && parts.length === 2 ? { pack: Number(pack), delivery, old: true } : null;
 }
 
 /**
  * Turns an order webhook payload into what we store, or null if the order has
- * no mount in it (e.g. only a gift card). One order = one row: if there are
- * several mount lines or a quantity above 1, the first line is used and the
- * order is flagged "check_items".
+ * no mount in it (e.g. only a gift card). One order = one row; units = the
+ * line's quantity. If there are several mount lines (both variants in one
+ * order), the first line is used and the order is flagged "check_items".
  */
 export function parseOrder(order: ShopifyOrder): ParsedOrder | null {
   const lines = (order.line_items ?? [])
@@ -104,9 +106,11 @@ export function parseOrder(order: ShopifyOrder): ParsedOrder | null {
   if (lines.length === 0 || order.id === undefined) return null;
 
   const flags: string[] = [];
-  if (lines.length > 1 || (lines[0].line.quantity ?? 1) > 1) flags.push("check_items");
+  if (lines.length > 1) flags.push("check_items");
 
   const { line, variant } = lines[0];
+  if (variant!.old) flags.push("old_variant");
+  const quantity = Number.isInteger(line.quantity) && line.quantity! > 0 ? line.quantity! : 1;
   const rawHost = String(findValue(order.note_attributes, HOST_ATTRIBUTE) ?? "").trim().toUpperCase();
   const hostCode = HOST_CODE.test(rawHost) ? rawHost : null;
   if (rawHost && !hostCode) flags.push("bad_host_code");
@@ -120,10 +124,9 @@ export function parseOrder(order: ShopifyOrder): ParsedOrder | null {
 
   return {
     shopifyOrderId: String(order.id),
-    units: variant!.units,
+    units: variant!.pack * quantity,
     delivery: variant!.delivery,
     hostCode,
-    shipAloneIfNotFull: String(findValue(line.properties, SHIP_ALONE_PROPERTY) ?? "").toLowerCase() === "yes",
     paidCents: toCents(order.current_subtotal_price ?? order.subtotal_price),
     buyerName: name,
     buyerEmail: order.email || order.contact_email || order.customer?.email || "",

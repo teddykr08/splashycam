@@ -1,67 +1,32 @@
 import { describe, expect, it } from "vitest";
 import {
-  boxDeadline,
-  boxRefundCents,
-  canShipNow,
-  checkoutPriceCents,
+  boxShipAt,
   classifyOrder,
   decideBox,
-  finalBoxPriceCents,
+  generatePickupCode,
   hostCutCents,
-  potCents,
-  shouldLeaveBox,
-  teamPackDiscount,
-  variantPriceTable,
+  normalizePickupCode,
+  orderPriceCents,
+  PICKUP_ALPHABET,
+  payoutWeekStart,
+  soloShipDate,
+  unitStatus,
   type BoxFacts,
+  type UnitFacts,
 } from "./rules";
 
 const d = (iso: string) => new Date(iso);
 
-describe("checkout prices (the 8 variants)", () => {
-  it("Ship to me: $21 / $37.80 / $53.55 / $67.20", () => {
-    expect([1, 2, 3, 4].map((u) => checkoutPriceCents(u, "alone"))).toEqual([2100, 3780, 5355, 6720]);
+describe("prices", () => {
+  it("School box $15 and Ship to me $19 per unit, quantity × unit price", () => {
+    expect(orderPriceCents(1, "box")).toBe(1500);
+    expect(orderPriceCents(1, "alone")).toBe(1900);
+    expect(orderPriceCents(4, "box")).toBe(6000);
+    expect(orderPriceCents(3, "alone")).toBe(5700);
   });
 
-  it("School box (×0.9): $18.90 / $34.02 / $48.20 / $60.48", () => {
-    expect([1, 2, 3, 4].map((u) => checkoutPriceCents(u, "box"))).toEqual([1890, 3402, 4820, 6048]);
-  });
-
-  it("variant table lists all 8", () => {
-    expect(variantPriceTable()).toHaveLength(8);
-  });
-
-  it("team pack discounts 10/15/20%", () => {
-    expect([1, 2, 3, 4].map(teamPackDiscount)).toEqual([0, 0.1, 0.15, 0.2]);
-  });
-
-  it("rejects 0, 5+ or fractional units", () => {
-    for (const bad of [0, 5, 1.5]) expect(() => checkoutPriceCents(bad, "box")).toThrow(RangeError);
-  });
-});
-
-describe("box refunds", () => {
-  it("box under 5: final price is what they paid, no refund", () => {
-    for (const n of [1, 2, 4]) {
-      expect(finalBoxPriceCents(1, n)).toBe(1890);
-      expect(boxRefundCents(1, 1890, n)).toBe(0);
-    }
-  });
-
-  it("box of 5+: a single unit gets $1.05 back (15% off $21 = $17.85)", () => {
-    expect(finalBoxPriceCents(1, 5)).toBe(1785);
-    expect(boxRefundCents(1, 1890, 5)).toBe(105);
-    expect(boxRefundCents(1, 1890, 12)).toBe(105);
-  });
-
-  it("box of 5+ with a team pack: discounts multiply", () => {
-    // 4-pack: $84 × 0.80 × 0.85 = $57.12; paid $60.48 → $3.36 back
-    expect(finalBoxPriceCents(4, 5)).toBe(5712);
-    expect(boxRefundCents(4, 6048, 5)).toBe(336);
-  });
-
-  it("never refunds more than was paid or a negative amount", () => {
-    expect(boxRefundCents(1, 50, 5)).toBe(0);
-    expect(boxRefundCents(1, 0, 5)).toBe(0);
+  it("rejects 0 or fractional quantities", () => {
+    for (const bad of [0, -1, 1.5]) expect(() => orderPriceCents(bad, "box")).toThrow(RangeError);
   });
 });
 
@@ -74,106 +39,155 @@ describe("incoming orders", () => {
     expect(classifyOrder("box", false)).toEqual({ shipping: "alone", flag: "box_without_host" });
   });
 
-  it("ship-to-me orders ship alone, host or not", () => {
+  it("ship-to-me orders ship alone", () => {
     expect(classifyOrder("alone", true)).toEqual({ shipping: "alone", flag: null });
-    expect(classifyOrder("alone", false)).toEqual({ shipping: "alone", flag: null });
   });
 });
 
-describe("cuts", () => {
-  it("host cut is on the full $21 price", () => {
-    expect(hostCutCents(1, "box", 3)).toBe(210); // 10%
-    expect(hostCutCents(1, "box", 5)).toBe(315); // 15%
-    expect(hostCutCents(4, "box", 5)).toBe(1260); // 15% of $84
+describe("host cut", () => {
+  it("$3 per box unit, $1.50 per solo unit", () => {
+    expect(hostCutCents(1, "box", true)).toBe(300);
+    expect(hostCutCents(4, "box", true)).toBe(1200);
+    expect(hostCutCents(1, "alone", true)).toBe(150);
+    expect(hostCutCents(3, "alone", true)).toBe(450);
   });
 
-  it("anything that ships alone on a host's code pays 5%", () => {
-    expect(hostCutCents(1, "alone", 0)).toBe(105);
-    expect(hostCutCents(1, "box", 1)).toBe(105); // a box that ships with 1 order
+  it("nothing without a host code", () => {
+    expect(hostCutCents(2, "alone", false)).toBe(0);
   });
 
-  it("no host, no cut", () => {
-    expect(hostCutCents(1, "alone", 0, false)).toBe(0);
-  });
-
-  it("pot is 10% of what was paid, only if the game has one", () => {
-    expect(potCents(1785, true)).toBe(179);
-    expect(potCents(1785, false)).toBe(0);
-  });
 });
 
-describe("timing", () => {
-  const start = d("2026-12-20T00:00:00Z");
-
-  it("before the game: deadline is 5 days before it starts", () => {
-    expect(boxDeadline(d("2026-12-01T00:00:00Z"), start)).toEqual(d("2026-12-15T00:00:00Z"));
-  });
-
-  it("box opened inside that window or after the start: 3 days after opening", () => {
-    expect(boxDeadline(d("2026-12-17T00:00:00Z"), start)).toEqual(d("2026-12-20T00:00:00Z"));
-    expect(boxDeadline(d("2026-12-25T00:00:00Z"), start)).toEqual(d("2026-12-28T00:00:00Z"));
-  });
-
-  it("no start date: 3 days after opening", () => {
-    expect(boxDeadline(d("2026-12-01T00:00:00Z"), null)).toEqual(d("2026-12-04T00:00:00Z"));
-  });
-
-  it("ship now needs 2+ orders", () => {
-    expect(canShipNow(1)).toBe(false);
-    expect(canShipNow(2)).toBe(true);
-  });
-});
-
-describe("ship mine alone if my box isn't full in 3 days", () => {
-  const order = { createdAt: d("2026-12-01T12:00:00Z"), shipAloneIfNotFull: true };
-
-  it("leaves after 3 days from that order when the box has under 5", () => {
-    expect(shouldLeaveBox(order, 3, d("2026-12-04T11:59:00Z"))).toBe(false);
-    expect(shouldLeaveBox(order, 3, d("2026-12-04T12:00:00Z"))).toBe(true);
-  });
-
-  it("stays if the box is full", () => {
-    expect(shouldLeaveBox(order, 5, d("2026-12-10T00:00:00Z"))).toBe(false);
-  });
-
-  it("stays if the buyer didn't tick it", () => {
-    expect(shouldLeaveBox({ ...order, shipAloneIfNotFull: false }, 1, d("2026-12-10T00:00:00Z"))).toBe(false);
-  });
-});
-
-describe("decideBox", () => {
-  const ids = (n: number) => Array.from({ length: n }, (_, i) => `o${i + 1}`);
+describe("box timing", () => {
+  const start = d("2027-02-20T15:00:00Z");
   const box = (over: Partial<BoxFacts>): BoxFacts => ({
-    openedAt: d("2026-12-01T00:00:00Z"),
-    gameStartsAt: null, // deadline 2026-12-04
+    openedAt: d("2027-01-01T12:00:00Z"),
+    gameStartsAt: start,
     filledAt: null,
-    orderIds: [],
+    orderIds: ["o1"],
     ...over,
   });
 
-  it("a full box ships the day after the 5th order", () => {
-    const b = box({ orderIds: ids(5), filledAt: d("2026-12-02T10:00:00Z") });
-    expect(decideBox(b, d("2026-12-03T09:00:00Z"))).toEqual({ action: "wait", until: d("2026-12-03T10:00:00Z") });
-    expect(decideBox(b, d("2026-12-03T10:00:00Z"))).toMatchObject({ action: "ship", reason: "full" });
+  it("pre-game box ships 7 days before the start, however many orders", () => {
+    expect(boxShipAt(box({}))).toEqual({ at: d("2027-02-13T15:00:00Z"), reason: "pre_game" });
+    // filling up early doesn't ship it sooner
+    expect(boxShipAt(box({ filledAt: d("2027-01-05T00:00:00Z") })).reason).toBe("pre_game");
   });
 
-  it("waits until the deadline when not full", () => {
-    expect(decideBox(box({ orderIds: ids(3) }), d("2026-12-03T00:00:00Z"))).toEqual({
-      action: "wait",
-      until: d("2026-12-04T00:00:00Z"),
+  it("in-game box: 24h after the 5th order when that's sooner", () => {
+    const b = box({ openedAt: d("2027-03-01T12:00:00Z"), filledAt: d("2027-03-02T09:00:00Z") });
+    expect(boxShipAt(b)).toEqual({ at: d("2027-03-03T09:00:00Z"), reason: "full" });
+  });
+
+  it("in-game box: 3 days after the first order when that's sooner", () => {
+    const b = box({ openedAt: d("2027-03-01T12:00:00Z"), filledAt: d("2027-03-03T18:00:00Z") });
+    expect(boxShipAt(b)).toEqual({ at: d("2027-03-04T12:00:00Z"), reason: "max_open" });
+    expect(boxShipAt(box({ openedAt: d("2027-03-01T12:00:00Z") }))).toEqual({ at: d("2027-03-04T12:00:00Z"), reason: "max_open" });
+  });
+
+  it("box opened inside the last 7 days before the start uses the in-game rule", () => {
+    expect(boxShipAt(box({ openedAt: d("2027-02-15T12:00:00Z") })).reason).toBe("max_open");
+  });
+
+  it("no start date set: in-game rule", () => {
+    expect(boxShipAt(box({ gameStartsAt: null })).reason).toBe("max_open");
+  });
+
+  it("decideBox: wait, then ship even under 5; close an empty box", () => {
+    const b = box({ gameStartsAt: null, orderIds: ["o1", "o2"] });
+    expect(decideBox(b, d("2027-01-02T00:00:00Z"))).toEqual({ action: "wait", until: d("2027-01-04T12:00:00Z") });
+    expect(decideBox(b, d("2027-01-04T12:00:00Z"))).toEqual({ action: "ship", reason: "max_open", orderIds: ["o1", "o2"] });
+    expect(decideBox({ ...b, orderIds: [] }, d("2027-01-05T00:00:00Z"))).toEqual({ action: "close_empty" });
+  });
+
+});
+
+describe("solo shipping", () => {
+  it("next business day in shop time", () => {
+    expect(soloShipDate(d("2027-01-04T15:00:00Z"))).toBe("2027-01-05"); // Mon → Tue
+    expect(soloShipDate(d("2027-01-08T15:00:00Z"))).toBe("2027-01-11"); // Fri → Mon
+    expect(soloShipDate(d("2027-01-09T15:00:00Z"))).toBe("2027-01-11"); // Sat → Mon
+    expect(soloShipDate(d("2027-01-10T15:00:00Z"))).toBe("2027-01-11"); // Sun → Mon
+  });
+
+  it("uses the shop's date (US Pacific), not UTC's", () => {
+    // Friday 11pm Pacific = Saturday 07:00 UTC → still Friday's order → Monday
+    expect(soloShipDate(d("2027-01-09T07:00:00Z"))).toBe("2027-01-11");
+    // Thursday 9pm Pacific = Friday 05:00 UTC → Thursday's order → Friday
+    expect(soloShipDate(d("2027-01-08T05:00:00Z"))).toBe("2027-01-08");
+  });
+});
+
+describe("pickup codes", () => {
+  it("6 characters from the readable alphabet", () => {
+    let i = 0;
+    const code = generatePickupCode(() => i++ % PICKUP_ALPHABET.length);
+    expect(code).toBe("012345");
+    const n = 31;
+    expect(generatePickupCode(() => n)).toBe("ZZZZZZ");
+    expect(PICKUP_ALPHABET).not.toMatch(/[ILOU]/);
+  });
+
+  it("normalizes what a host types", () => {
+    expect(normalizePickupCode(" ab-c 1o9 ")).toBe("ABC109");
+    expect(normalizePickupCode("lixo")).toBe("11X0"); // L→1, I→1, X stays, O→0
+  });
+});
+
+describe("delivery and payout eligibility", () => {
+  const now = d("2027-03-20T00:00:00Z");
+  const box = (over: Partial<UnitFacts>): UnitFacts => ({
+    shipping: "box",
+    handedOffAt: null,
+    buyerResponse: "none",
+    boxDeliveredAt: null,
+    shippedAt: null,
+    ...over,
+  });
+
+  it("host typed the code → delivered and owed", () => {
+    expect(unitStatus(box({ handedOffAt: d("2027-03-01T00:00:00Z") }), now)).toEqual({ delivered: true, owed: true, flag: null });
+  });
+
+  it("7 days after the box arrived with no complaint → delivered", () => {
+    expect(unitStatus(box({ boxDeliveredAt: d("2027-03-13T00:00:00Z") }), now).owed).toBe(true);
+    expect(unitStatus(box({ boxDeliveredAt: d("2027-03-14T00:00:00Z") }), now).owed).toBe(false);
+    expect(unitStatus(box({}), now).owed).toBe(false); // box hasn't arrived
+  });
+
+  it("buyer says no and no code typed → not owed, flagged", () => {
+    expect(unitStatus(box({ buyerResponse: "no", boxDeliveredAt: d("2027-01-01T00:00:00Z") }), now)).toEqual({
+      delivered: false,
+      owed: false,
+      flag: "buyer_says_not_received",
     });
   });
 
-  it("ships with whatever it has at the deadline, even 1 order", () => {
-    expect(decideBox(box({ orderIds: ids(1) }), d("2026-12-04T00:00:00Z"))).toEqual({
-      action: "ship",
-      reason: "deadline",
-      orderIds: ["o1"],
+  it("buyer says no but the code was typed → still owed, flagged for review", () => {
+    expect(unitStatus(box({ buyerResponse: "no", handedOffAt: d("2027-03-01T00:00:00Z") }), now)).toEqual({
+      delivered: true,
+      owed: true,
+      flag: "buyer_disputes_handoff",
     });
-    expect(decideBox(box({ orderIds: ids(3) }), d("2026-12-04T00:00:00Z"))).toMatchObject({ action: "ship" });
   });
 
-  it("closes a box everyone left", () => {
-    expect(decideBox(box({}), d("2026-12-05T00:00:00Z"))).toEqual({ action: "close_empty" });
+  it("buyer says yes → delivered right away (box or solo)", () => {
+    expect(unitStatus(box({ buyerResponse: "yes" }), now)).toEqual({ delivered: true, owed: true, flag: null });
+    expect(unitStatus(box({ shipping: "alone", buyerResponse: "yes" }), now).owed).toBe(true);
+  });
+
+  it("solo: 7 days after shipping unless the buyer says no", () => {
+    const solo = box({ shipping: "alone", shippedAt: d("2027-03-10T00:00:00Z") });
+    expect(unitStatus(solo, now).owed).toBe(true);
+    expect(unitStatus({ ...solo, buyerResponse: "no" }, now).flag).toBe("buyer_says_not_received");
+  });
+});
+
+describe("payout weeks", () => {
+  it("week starts Monday, US Pacific", () => {
+    expect(payoutWeekStart(d("2027-01-06T15:00:00Z"))).toBe("2027-01-04"); // Wed
+    expect(payoutWeekStart(d("2027-01-04T15:00:00Z"))).toBe("2027-01-04"); // Mon
+    expect(payoutWeekStart(d("2027-01-10T15:00:00Z"))).toBe("2027-01-04"); // Sun
+    expect(payoutWeekStart(d("2027-01-11T06:00:00Z"))).toBe("2027-01-04"); // Sun 10pm Pacific
   });
 });
