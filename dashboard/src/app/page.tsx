@@ -17,13 +17,14 @@ export default function ProductPage() {
             </Link>
 
             <h1 className="sc-title sc-pitch">A phone mount for any water gun. Film your kills hands free.</h1>
+
+            <Clip />
+
             <ul className="sc-points">
               {POINTS.map((p) => (
                 <li key={p}>{p}</li>
               ))}
             </ul>
-
-            <Clip />
 
             <div className="sc-signup">
               <h2 className="sc-when">Launching January.</h2>
