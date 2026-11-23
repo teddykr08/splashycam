@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       boxes: {
         Row: {
+          delivered_at: string | null;
           created_at: string;
           filled_at: string | null;
           host_id: string;
@@ -22,6 +23,7 @@ export type Database = {
           tracking: string | null;
         };
         Insert: {
+          delivered_at?: string | null;
           created_at?: string;
           filled_at?: string | null;
           host_id: string;
@@ -33,6 +35,7 @@ export type Database = {
           tracking?: string | null;
         };
         Update: {
+          delivered_at?: string | null;
           created_at?: string;
           filled_at?: string | null;
           host_id?: string;
@@ -112,6 +115,7 @@ export type Database = {
       };
       hosts: {
         Row: {
+          venmo_handle: string | null;
           code: string;
           created_at: string;
           email: string;
@@ -123,6 +127,7 @@ export type Database = {
           user_id: string | null;
         };
         Insert: {
+          venmo_handle?: string | null;
           code: string;
           created_at?: string;
           email: string;
@@ -134,6 +139,7 @@ export type Database = {
           user_id?: string | null;
         };
         Update: {
+          venmo_handle?: string | null;
           code?: string;
           created_at?: string;
           email?: string;
@@ -148,6 +154,12 @@ export type Database = {
       };
       orders: {
         Row: {
+          shipped_at: string | null;
+          pickup_code: string | null;
+          payout_id: string | null;
+          handed_off_at: string | null;
+          buyer_response: string;
+          buyer_responded_at: string | null;
           box_id: string | null;
           buyer_email: string;
           buyer_name: string;
@@ -167,6 +179,12 @@ export type Database = {
           units: number;
         };
         Insert: {
+          shipped_at?: string | null;
+          pickup_code?: string | null;
+          payout_id?: string | null;
+          handed_off_at?: string | null;
+          buyer_response?: string;
+          buyer_responded_at?: string | null;
           box_id?: string | null;
           buyer_email: string;
           buyer_name: string;
@@ -186,6 +204,12 @@ export type Database = {
           units: number;
         };
         Update: {
+          shipped_at?: string | null;
+          pickup_code?: string | null;
+          payout_id?: string | null;
+          handed_off_at?: string | null;
+          buyer_response?: string;
+          buyer_responded_at?: string | null;
           box_id?: string | null;
           buyer_email?: string;
           buyer_name?: string;
@@ -223,52 +247,41 @@ export type Database = {
       };
       payouts: {
         Row: {
+          note: string | null;
+          venmo_handle: string | null;
+          week_start: string;
           amount_cents: number;
-          box_id: string | null;
           created_at: string;
           host_id: string;
           id: string;
-          order_id: string | null;
           paid_at: string | null;
         };
         Insert: {
+          note?: string | null;
+          venmo_handle?: string | null;
+          week_start: string;
           amount_cents: number;
-          box_id?: string | null;
           created_at?: string;
           host_id: string;
           id?: string;
-          order_id?: string | null;
           paid_at?: string | null;
         };
         Update: {
+          note?: string | null;
+          venmo_handle?: string | null;
+          week_start?: string;
           amount_cents?: number;
-          box_id?: string | null;
           created_at?: string;
           host_id?: string;
           id?: string;
-          order_id?: string | null;
           paid_at?: string | null;
         };
         Relationships: [
-          {
-            foreignKeyName: "payouts_box_id_fkey";
-            columns: ["box_id"];
-            isOneToOne: true;
-            referencedRelation: "boxes";
-            referencedColumns: ["id"];
-          },
           {
             foreignKeyName: "payouts_host_id_fkey";
             columns: ["host_id"];
             isOneToOne: false;
             referencedRelation: "hosts";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "payouts_order_id_fkey";
-            columns: ["order_id"];
-            isOneToOne: true;
-            referencedRelation: "orders";
             referencedColumns: ["id"];
           },
         ];

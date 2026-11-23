@@ -25,17 +25,21 @@ describe("verifyShopifyHmac", () => {
 });
 
 describe("parseVariantTitle", () => {
-  it("reads pack and delivery", () => {
-    expect(parseVariantTitle("2 / School box")).toEqual({ units: 2, delivery: "box" });
-    expect(parseVariantTitle("4 / Ship to me")).toEqual({ units: 4, delivery: "alone" });
-    expect(parseVariantTitle("School box / 3")).toEqual({ units: 3, delivery: "box" });
+  it("reads the single Delivery option", () => {
+    expect(parseVariantTitle("School box")).toEqual({ pack: 1, delivery: "box", old: false });
+    expect(parseVariantTitle("Ship to me")).toEqual({ pack: 1, delivery: "alone", old: false });
+  });
+
+  it("still reads old two-option titles during the switchover", () => {
+    expect(parseVariantTitle("2 / School box")).toEqual({ pack: 2, delivery: "box", old: true });
+    expect(parseVariantTitle("Ship to me / 4")).toEqual({ pack: 4, delivery: "alone", old: true });
   });
 
   it("returns null for anything else", () => {
     expect(parseVariantTitle(null)).toBeNull();
     expect(parseVariantTitle("Default Title")).toBeNull();
     expect(parseVariantTitle("5 / School box")).toBeNull();
-    expect(parseVariantTitle("1 / Pickup")).toBeNull();
+    expect(parseVariantTitle("Pickup")).toBeNull();
   });
 });
 
@@ -46,7 +50,7 @@ describe("parseOrder", () => {
     current_subtotal_price: "18.90",
     note_attributes: [{ name: "host", value: "lincoln-hs" }],
     shipping_address: { name: "Sam Lee", address1: "1 Main St", city: "Austin", province_code: "TX", zip: "78701" },
-    line_items: [{ variant_title: "1 / School box", quantity: 1, properties: [] }],
+    line_items: [{ variant_title: "School box", quantity: 1, properties: [] }],
   };
 
   it("reads a school box order", () => {
@@ -65,7 +69,7 @@ describe("parseOrder", () => {
   });
 
   it("reads the ship-alone checkbox", () => {
-    const order = { ...base, line_items: [{ variant_title: "1 / School box", properties: [{ name: SHIP_ALONE_PROPERTY, value: "Yes" }] }] };
+    const order = { ...base, line_items: [{ variant_title: "School box", properties: [{ name: SHIP_ALONE_PROPERTY, value: "Yes" }] }] };
     expect(parseOrder(order)?.shipAloneIfNotFull).toBe(true);
   });
 
@@ -76,11 +80,23 @@ describe("parseOrder", () => {
     expect(bad?.flags).toContain("bad_host_code");
   });
 
-  it("flags several mount lines or quantity above 1", () => {
-    expect(parseOrder({ ...base, line_items: [{ variant_title: "1 / Ship to me", quantity: 2 }] })?.flags).toEqual(["check_items"]);
+  it("quantity is the number of units (no flag)", () => {
+    const r = parseOrder({ ...base, line_items: [{ variant_title: "Ship to me", quantity: 3 }] });
+    expect(r?.units).toBe(3);
+    expect(r?.delivery).toBe("alone");
+    expect(r?.flags).toEqual([]);
+  });
+
+  it("flags several mount lines", () => {
     expect(
-      parseOrder({ ...base, line_items: [{ variant_title: "1 / Ship to me" }, { variant_title: "2 / Ship to me" }] })?.flags,
+      parseOrder({ ...base, line_items: [{ variant_title: "Ship to me" }, { variant_title: "School box" }] })?.flags,
     ).toEqual(["check_items"]);
+  });
+
+  it("old variant: units = pack × quantity, flagged", () => {
+    const r = parseOrder({ ...base, line_items: [{ variant_title: "2 / School box", quantity: 2 }] });
+    expect(r?.units).toBe(4);
+    expect(r?.flags).toEqual(["old_variant"]);
   });
 
   it("ignores orders with no mount", () => {
