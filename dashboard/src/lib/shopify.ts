@@ -8,13 +8,11 @@
  * number of units. Old two-option titles ("2 / School box") still parse during
  * the switchover (units = pack × quantity) and are flagged "old_variant".
  * The host code arrives as the cart attribute "host" (order.note_attributes).
- * The ship-alone checkbox arrives as a line item property.
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Delivery } from "./rules";
 
 export const HOST_ATTRIBUTE = "host";
-export const SHIP_ALONE_PROPERTY = "Ship mine alone if my box isn't full in 3 days";
 const DELIVERY_VALUES: Record<string, Delivery> = { "School box": "box", "Ship to me": "alone" };
 const HOST_CODE = /^[A-Z0-9-]{2,32}$/;
 
@@ -73,7 +71,6 @@ export interface ParsedOrder {
   units: number;
   delivery: Delivery;
   hostCode: string | null;
-  shipAloneIfNotFull: boolean;
   paidCents: number;
   buyerName: string;
   buyerEmail: string;
@@ -130,7 +127,6 @@ export function parseOrder(order: ShopifyOrder): ParsedOrder | null {
     units: variant!.pack * quantity,
     delivery: variant!.delivery,
     hostCode,
-    shipAloneIfNotFull: String(findValue(line.properties, SHIP_ALONE_PROPERTY) ?? "").toLowerCase() === "yes",
     paidCents: toCents(order.current_subtotal_price ?? order.subtotal_price),
     buyerName: name,
     buyerEmail: order.email || order.contact_email || order.customer?.email || "",

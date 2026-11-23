@@ -60,7 +60,6 @@ export async function recordOrder(db: Db, parsed: ParsedOrder): Promise<RecordRe
       box_id: boxId,
       shipping,
       units: parsed.units,
-      ship_alone_if_not_full: parsed.shipAloneIfNotFull,
       buyer_name: parsed.buyerName,
       buyer_email: parsed.buyerEmail,
       // A box ships to the host; only orders shipping alone need the buyer's address.

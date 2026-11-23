@@ -13,8 +13,9 @@
  * - Boxes: before the game, one box collects everything and ships 7 days before
  *   the start. During the game, a box ships 24h after its 5th order or 3 days
  *   after its first, whichever is first, even if under 5.
- * - Solo orders ship the next business day.
- * - Payouts are weekly (Venmo).
+ * - Solo orders ship the next business day (US Pacific).
+ * - Payouts are weekly (Venmo), weeks starting Monday, US Pacific.
+ * - No pot. No "ship mine alone" checkbox (anyone in a hurry picks Ship to me).
  */
 
 // ---------------------------------------------------------------- prices
@@ -52,11 +53,6 @@ export function hostCutCents(units: number, shipping: Shipping, hasHost: boolean
   return hasHost ? units * HOST_CUT_CENTS[shipping] : 0;
 }
 
-/** Old pot rule, unchanged: 10% of what the buyer paid, only if the game has a pot. */
-export const POT_RATE = 0.1;
-export function potCents(paidCents: number, gameHasPot: boolean): number {
-  return gameHasPot ? Math.round(paidCents * POT_RATE) : 0;
-}
 
 // ---------------------------------------------------------------- box timing
 
@@ -67,7 +63,6 @@ export const BOX_FULL_AT = 5; // orders, not units
 export const FULL_GRACE_HOURS = 24; // add-on window after the 5th order
 export const BOX_MAX_OPEN_DAYS = 3; // in-game box ships 3 days after its first order at the latest
 export const PRE_GAME_SHIP_DAYS = 7; // the pre-game box ships 7 days before the start
-export const SHIP_ALONE_AFTER_DAYS = 3; // "ship mine alone if my box isn't full in 3 days"
 
 export interface BoxFacts {
   /** When the box's first order arrived (boxes.opened_at). */
@@ -106,8 +101,7 @@ export type BoxDecision =
   | { action: "close_empty" };
 
 /**
- * What the hourly cron should do with an open box right now. Run shouldLeaveBox
- * on its orders first, then decide with the orders that are left.
+ * What the hourly cron should do with an open box right now.
  */
 export function decideBox(box: BoxFacts, now: Date): BoxDecision {
   const { at, reason } = boxShipAt(box);
@@ -116,26 +110,11 @@ export function decideBox(box: BoxFacts, now: Date): BoxDecision {
   return { action: "ship", reason, orderIds: box.orderIds };
 }
 
-/**
- * "Ship mine alone if my box isn't full in 3 days": true once 3 days have passed
- * since this order and its box still has fewer than 5 orders.
- */
-export function shouldLeaveBox(
-  order: { createdAt: Date; shipAloneIfNotFull: boolean },
-  boxOrderCount: number,
-  now: Date,
-): boolean {
-  if (!order.shipAloneIfNotFull || boxOrderCount >= BOX_FULL_AT) return false;
-  return now.getTime() >= order.createdAt.getTime() + SHIP_ALONE_AFTER_DAYS * DAY_MS;
-}
 
 // ---------------------------------------------------------------- solo shipping
 
-/**
- * The shop's time zone for "business day" and payout weeks.
- * ASSUMPTION (not decided yet): US Eastern.
- */
-export const SHOP_TIME_ZONE = "America/New_York";
+/** The shop's time zone for "business day" and payout weeks: US Pacific. */
+export const SHOP_TIME_ZONE = "America/Los_Angeles";
 
 /** The calendar date (YYYY-MM-DD) of an instant in the shop's time zone. */
 export function shopDate(at: Date, timeZone = SHOP_TIME_ZONE): string {
@@ -187,7 +166,7 @@ export interface UnitFacts {
   buyerResponse: BuyerResponse;
   /** Box orders: when the box reached the host (boxes.delivered_at). */
   boxDeliveredAt: Date | null;
-  /** Solo orders: when it shipped to the buyer (orders.shipped_at). ASSUMPTION, see unitStatus. */
+  /** Solo orders: when it shipped to the buyer (orders.shipped_at). */
   shippedAt: Date | null;
 }
 
@@ -196,12 +175,12 @@ export type UnitFlag = "buyer_says_not_received" | "buyer_disputes_handoff";
 /**
  * Whether an order's units count as delivered, whether the host cut is owed,
  * and anything the owner should look at.
+ * - The buyer saying "yes" counts as delivered right away.
  * - Box: delivered if the host typed the code, or 7 days after the box arrived
  *   without the buyer saying no.
  *   Buyer says no, no code typed → not delivered, not owed, flagged.
  *   Buyer says no, code typed → still owed, flagged for review.
- * - Solo: ASSUMPTION (not decided yet): there's no handoff, so it counts as
- *   delivered 7 days after it shipped unless the buyer says no.
+ * - Solo (no handoff): delivered 7 days after it shipped unless the buyer says no.
  */
 export function unitStatus(u: UnitFacts, now: Date): { delivered: boolean; owed: boolean; flag: UnitFlag | null } {
   const said = u.buyerResponse;
@@ -209,6 +188,7 @@ export function unitStatus(u: UnitFacts, now: Date): { delivered: boolean; owed:
     return { delivered: true, owed: true, flag: said === "no" ? "buyer_disputes_handoff" : null };
   }
   if (said === "no") return { delivered: false, owed: false, flag: "buyer_says_not_received" };
+  if (said === "yes") return { delivered: true, owed: true, flag: null };
 
   const arrived = u.shipping === "box" ? u.boxDeliveredAt : u.shippedAt;
   const delivered = !!arrived && now.getTime() >= arrived.getTime() + DELIVERED_AFTER_DAYS * DAY_MS;

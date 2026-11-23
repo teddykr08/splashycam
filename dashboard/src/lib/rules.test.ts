@@ -9,8 +9,6 @@ import {
   orderPriceCents,
   PICKUP_ALPHABET,
   payoutWeekStart,
-  potCents,
-  shouldLeaveBox,
   soloShipDate,
   unitStatus,
   type BoxFacts,
@@ -58,10 +56,6 @@ describe("host cut", () => {
     expect(hostCutCents(2, "alone", false)).toBe(0);
   });
 
-  it("pot unchanged: 10% of what was paid, only with a pot", () => {
-    expect(potCents(1500, true)).toBe(150);
-    expect(potCents(1500, false)).toBe(0);
-  });
 });
 
 describe("box timing", () => {
@@ -106,12 +100,6 @@ describe("box timing", () => {
     expect(decideBox({ ...b, orderIds: [] }, d("2027-01-05T00:00:00Z"))).toEqual({ action: "close_empty" });
   });
 
-  it("ship-alone checkbox: 3 days after that order if the box is under 5", () => {
-    const o = { createdAt: d("2027-01-01T12:00:00Z"), shipAloneIfNotFull: true };
-    expect(shouldLeaveBox(o, 3, d("2027-01-04T11:00:00Z"))).toBe(false);
-    expect(shouldLeaveBox(o, 3, d("2027-01-04T12:00:00Z"))).toBe(true);
-    expect(shouldLeaveBox(o, 5, d("2027-01-09T00:00:00Z"))).toBe(false);
-  });
 });
 
 describe("solo shipping", () => {
@@ -122,11 +110,11 @@ describe("solo shipping", () => {
     expect(soloShipDate(d("2027-01-10T15:00:00Z"))).toBe("2027-01-11"); // Sun → Mon
   });
 
-  it("uses the shop's date, not UTC's", () => {
-    // Friday 11pm New York = Saturday 04:00 UTC → still Friday's order → Monday
-    expect(soloShipDate(d("2027-01-09T04:00:00Z"))).toBe("2027-01-11");
-    // Thursday 9pm New York = Friday 02:00 UTC → Thursday's order → Friday
-    expect(soloShipDate(d("2027-01-08T02:00:00Z"))).toBe("2027-01-08");
+  it("uses the shop's date (US Pacific), not UTC's", () => {
+    // Friday 11pm Pacific = Saturday 07:00 UTC → still Friday's order → Monday
+    expect(soloShipDate(d("2027-01-09T07:00:00Z"))).toBe("2027-01-11");
+    // Thursday 9pm Pacific = Friday 05:00 UTC → Thursday's order → Friday
+    expect(soloShipDate(d("2027-01-08T05:00:00Z"))).toBe("2027-01-08");
   });
 });
 
@@ -183,7 +171,12 @@ describe("delivery and payout eligibility", () => {
     });
   });
 
-  it("solo: 7 days after shipping unless the buyer says no (assumption)", () => {
+  it("buyer says yes → delivered right away (box or solo)", () => {
+    expect(unitStatus(box({ buyerResponse: "yes" }), now)).toEqual({ delivered: true, owed: true, flag: null });
+    expect(unitStatus(box({ shipping: "alone", buyerResponse: "yes" }), now).owed).toBe(true);
+  });
+
+  it("solo: 7 days after shipping unless the buyer says no", () => {
     const solo = box({ shipping: "alone", shippedAt: d("2027-03-10T00:00:00Z") });
     expect(unitStatus(solo, now).owed).toBe(true);
     expect(unitStatus({ ...solo, buyerResponse: "no" }, now).flag).toBe("buyer_says_not_received");
@@ -191,10 +184,10 @@ describe("delivery and payout eligibility", () => {
 });
 
 describe("payout weeks", () => {
-  it("week starts Monday in shop time", () => {
+  it("week starts Monday, US Pacific", () => {
     expect(payoutWeekStart(d("2027-01-06T15:00:00Z"))).toBe("2027-01-04"); // Wed
     expect(payoutWeekStart(d("2027-01-04T15:00:00Z"))).toBe("2027-01-04"); // Mon
     expect(payoutWeekStart(d("2027-01-10T15:00:00Z"))).toBe("2027-01-04"); // Sun
-    expect(payoutWeekStart(d("2027-01-11T03:00:00Z"))).toBe("2027-01-04"); // Sun 10pm NY
+    expect(payoutWeekStart(d("2027-01-11T06:00:00Z"))).toBe("2027-01-04"); // Sun 10pm Pacific
   });
 });

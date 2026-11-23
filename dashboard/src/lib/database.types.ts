@@ -115,11 +115,11 @@ export type Database = {
       };
       hosts: {
         Row: {
+          dashboard_token: string;
           venmo_handle: string | null;
           code: string;
           created_at: string;
           email: string;
-          game_has_pot: boolean;
           game_starts_at: string | null;
           id: string;
           name: string;
@@ -127,11 +127,11 @@ export type Database = {
           user_id: string | null;
         };
         Insert: {
+          dashboard_token?: string;
           venmo_handle?: string | null;
           code: string;
           created_at?: string;
           email: string;
-          game_has_pot?: boolean;
           game_starts_at?: string | null;
           id?: string;
           name: string;
@@ -139,11 +139,11 @@ export type Database = {
           user_id?: string | null;
         };
         Update: {
+          dashboard_token?: string;
           venmo_handle?: string | null;
           code?: string;
           created_at?: string;
           email?: string;
-          game_has_pot?: boolean;
           game_starts_at?: string | null;
           id?: string;
           name?: string;
@@ -169,9 +169,7 @@ export type Database = {
           host_id: string | null;
           id: string;
           paid_cents: number | null;
-          pot_cents: number | null;
           refunded_cents: number;
-          ship_alone_if_not_full: boolean;
           ship_to: Json | null;
           shipping: Database["public"]["Enums"]["shipping"];
           shopify_order_id: string;
@@ -194,9 +192,7 @@ export type Database = {
           host_id?: string | null;
           id?: string;
           paid_cents?: number | null;
-          pot_cents?: number | null;
           refunded_cents?: number;
-          ship_alone_if_not_full?: boolean;
           ship_to?: Json | null;
           shipping: Database["public"]["Enums"]["shipping"];
           shopify_order_id: string;
@@ -219,9 +215,7 @@ export type Database = {
           host_id?: string | null;
           id?: string;
           paid_cents?: number | null;
-          pot_cents?: number | null;
           refunded_cents?: number;
-          ship_alone_if_not_full?: boolean;
           ship_to?: Json | null;
           shipping?: Database["public"]["Enums"]["shipping"];
           shopify_order_id?: string;

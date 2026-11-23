@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { parseOrder, parseVariantTitle, SHIP_ALONE_PROPERTY, toCents, verifyShopifyHmac, type ShopifyOrder } from "./shopify";
+import { parseOrder, parseVariantTitle, toCents, verifyShopifyHmac, type ShopifyOrder } from "./shopify";
 
 const SECRET = "test-secret";
 const sign = (body: string, secret = SECRET) => createHmac("sha256", secret).update(body, "utf8").digest("base64");
@@ -59,7 +59,6 @@ describe("parseOrder", () => {
       units: 1,
       delivery: "box",
       hostCode: "LINCOLN-HS",
-      shipAloneIfNotFull: false,
       paidCents: 1890,
       buyerName: "Sam Lee",
       buyerEmail: "sam@example.com",
@@ -68,10 +67,6 @@ describe("parseOrder", () => {
     });
   });
 
-  it("reads the ship-alone checkbox", () => {
-    const order = { ...base, line_items: [{ variant_title: "School box", properties: [{ name: SHIP_ALONE_PROPERTY, value: "Yes" }] }] };
-    expect(parseOrder(order)?.shipAloneIfNotFull).toBe(true);
-  });
 
   it("no host attribute → hostCode null; bad code → flagged", () => {
     expect(parseOrder({ ...base, note_attributes: [] })?.hostCode).toBeNull();
