@@ -14,13 +14,14 @@ export interface DashboardHost {
   name: string;
   code: string;
   game_starts_at: string | null;
+  boxes_enabled: boolean;
 }
 
 export async function findHostByToken(token: string): Promise<DashboardHost | null> {
   if (!TOKEN.test(token)) return null;
   const { data, error } = await createAdminClient()
     .from("hosts")
-    .select("id, name, code, game_starts_at")
+    .select("id, name, code, game_starts_at, boxes_enabled")
     .eq("dashboard_token", token)
     .maybeSingle();
   if (error) throw error;

@@ -56,6 +56,57 @@ export type Database = {
           },
         ];
       };
+      inventory: {
+        Row: {
+          id: number;
+          units_made: number;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          units_made?: number;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          units_made?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      host_leads: {
+        Row: {
+          created_at: string;
+          email: string | null;
+          id: string;
+          instagram: string;
+          name: string | null;
+          note: string | null;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          instagram: string;
+          name?: string | null;
+          note?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          instagram?: string;
+          name?: string | null;
+          note?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       host_applications: {
         Row: {
           created_at: string;
@@ -115,6 +166,9 @@ export type Database = {
       };
       hosts: {
         Row: {
+          boxes_enabled: boolean;
+          school: string | null;
+          instagram: string | null;
           dashboard_token: string;
           venmo_handle: string | null;
           code: string;
@@ -127,6 +181,9 @@ export type Database = {
           user_id: string | null;
         };
         Insert: {
+          boxes_enabled?: boolean;
+          school?: string | null;
+          instagram?: string | null;
           dashboard_token?: string;
           venmo_handle?: string | null;
           code: string;
@@ -139,6 +196,9 @@ export type Database = {
           user_id?: string | null;
         };
         Update: {
+          boxes_enabled?: boolean;
+          school?: string | null;
+          instagram?: string | null;
           dashboard_token?: string;
           venmo_handle?: string | null;
           code?: string;
@@ -154,6 +214,7 @@ export type Database = {
       };
       orders: {
         Row: {
+          tracking: string | null;
           handoff_locked_at: string | null;
           handoff_wrong_count: number;
           handoff_wrong_since: string | null;
@@ -180,6 +241,7 @@ export type Database = {
           units: number;
         };
         Insert: {
+          tracking?: string | null;
           handoff_locked_at?: string | null;
           handoff_wrong_count?: number;
           handoff_wrong_since?: string | null;
@@ -206,6 +268,7 @@ export type Database = {
           units: number;
         };
         Update: {
+          tracking?: string | null;
           handoff_locked_at?: string | null;
           handoff_wrong_count?: number;
           handoff_wrong_since?: string | null;
@@ -290,7 +353,25 @@ export type Database = {
         ];
       };
     };
-    Views: { [_ in never]: never };
+    Views: {
+      host_pipeline: {
+        Row: {
+          dm_at: string | null;
+          dm_status: string | null;
+          email: string | null;
+          filled_form: boolean | null;
+          form_at: string | null;
+          game_ends_on: string | null;
+          game_starts_on: string | null;
+          instagram: string | null;
+          name: string | null;
+          player_count: number | null;
+          school: string | null;
+          source: string | null;
+        };
+        Relationships: [];
+      };
+    };
     Functions: { [_ in never]: never };
     Enums: {
       box_status: "open" | "shipped" | "expired";

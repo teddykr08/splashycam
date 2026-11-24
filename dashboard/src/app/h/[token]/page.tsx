@@ -32,9 +32,18 @@ export default function HostDashboardPage({ params }: PageProps<"/h/[token]">) {
 }
 
 const shipDate = (iso: string) =>
-  new Intl.DateTimeFormat("en-US", { timeZone: SHOP_TIME_ZONE, weekday: "short", month: "short", day: "numeric" }).format(new Date(iso));
+  new Intl.DateTimeFormat("en-US", {
+    timeZone: SHOP_TIME_ZONE,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(iso));
 
-async function Dashboard({ params }: { params: PageProps<"/h/[token]">["params"] }) {
+async function Dashboard({
+  params,
+}: {
+  params: PageProps<"/h/[token]">["params"];
+}) {
   const { token } = await params;
   const data = await loadHostDashboard(token);
   if (!data) notFound();
@@ -46,62 +55,96 @@ async function Dashboard({ params }: { params: PageProps<"/h/[token]">["params"]
     <>
       <h1 className="sc-title sc-pitch">hey {host.name.split(" ")[0]} 👋</h1>
 
-      <section className="sc-card sc-hostdash__card" aria-labelledby="share-title">
+      <section
+        className="sc-card sc-hostdash__card"
+        aria-labelledby="share-title"
+      >
         <h2 className="sc-hostdash__h" id="share-title">
           your link
         </h2>
-        <p className="sc-hint">Share it with your players. Every order through it counts for you.</p>
+        <p className="sc-hint">
+          Share it with your players. Every order through it counts for you.
+        </p>
         <CopyLink url={shareUrl} />
       </section>
 
       <section className="sc-hostdash__money" aria-label="Your earnings">
         <div className="sc-card sc-stat">
           <span className="sc-stat__label">earned so far</span>
-          <strong className="sc-stat__num">{dollars(dashboard.earnedCents)}</strong>
+          <strong className="sc-stat__num">
+            {dollars(dashboard.earnedCents)}
+          </strong>
         </div>
         <div className="sc-card sc-stat">
           <span className="sc-stat__label">paid out</span>
-          <strong className="sc-stat__num">{dollars(dashboard.paidCents)}</strong>
+          <strong className="sc-stat__num">
+            {dollars(dashboard.paidCents)}
+          </strong>
         </div>
       </section>
       {dashboard.pendingCents > 0 && (
         <p className="sc-hint sc-hostdash__pending">
-          + {dollars(dashboard.pendingCents)} more once those orders are handed off.
+          + {dollars(dashboard.pendingCents)} more once those orders are handed
+          off.
         </p>
       )}
 
-      <section className="sc-card sc-hostdash__card" aria-labelledby="box-title">
-        <h2 className="sc-hostdash__h" id="box-title">
-          your school box
-        </h2>
-        {!box ? (
-          <p className="sc-text">No box yet. It opens with your first School box order.</p>
-        ) : box.reason === "pre_game" ? (
-          <p className="sc-text">
-            <strong>{box.orders}</strong> {box.orders === 1 ? "order" : "orders"} so far · ships {shipDate(box.shipsAt)}, a week
-            before your game
-          </p>
-        ) : (
-          <>
-            <div className="sc-progress" role="img" aria-label={`${box.orders} of ${box.fullAt} orders`}>
-              <div className="sc-progress__fill" style={{ width: `${Math.min(100, (box.orders / box.fullAt) * 100)}%` }} />
-            </div>
+      {host.boxes_enabled ? (
+        <section
+          className="sc-card sc-hostdash__card"
+          aria-labelledby="box-title"
+        >
+          <h2 className="sc-hostdash__h" id="box-title">
+            your school box
+          </h2>
+          {!box ? (
             <p className="sc-text">
-              <strong>
-                {box.orders} of {box.fullAt}
-              </strong>
-              , ships when full · or {shipDate(box.shipsAt)} at the latest
+              No box yet. It opens with your first School box order.
             </p>
-          </>
-        )}
-      </section>
+          ) : box.reason === "pre_game" ? (
+            <p className="sc-text">
+              <strong>{box.orders}</strong>{" "}
+              {box.orders === 1 ? "order" : "orders"} so far · ships{" "}
+              {shipDate(box.shipsAt)}, a week before your game
+            </p>
+          ) : (
+            <>
+              <div
+                className="sc-progress"
+                role="img"
+                aria-label={`${box.orders} of ${box.fullAt} orders`}
+              >
+                <div
+                  className="sc-progress__fill"
+                  style={{
+                    width: `${Math.min(100, (box.orders / box.fullAt) * 100)}%`,
+                  }}
+                />
+              </div>
+              <p className="sc-text">
+                <strong>
+                  {box.orders} of {box.fullAt}
+                </strong>
+                , ships when full · or {shipDate(box.shipsAt)} at the latest
+              </p>
+            </>
+          )}
+        </section>
+      ) : (
+        <p className="sc-hint">
+          Your link offers Ship to me only, so there&apos;s no school box to hand
+          out.
+        </p>
+      )}
 
       <section className="sc-hostdash__orders" aria-labelledby="orders-title">
         <h2 className="sc-hostdash__h" id="orders-title">
           orders
         </h2>
         {dashboard.orders.length === 0 ? (
-          <p className="sc-text">No orders yet. Share your link to get the first one.</p>
+          <p className="sc-text">
+            No orders yet. Share your link to get the first one.
+          </p>
         ) : (
           <ul className="sc-orderlist">
             {dashboard.orders.map((o) => (
@@ -109,13 +152,20 @@ async function Dashboard({ params }: { params: PageProps<"/h/[token]">["params"]
                 <div className="sc-order__top">
                   <strong className="sc-order__name">{o.buyerName}</strong>
                   <span className="sc-order__meta">
-                    {o.units} × {o.shipping === "box" ? "school box" : "ship to me"}
+                    {o.units} ×{" "}
+                    {o.shipping === "box" ? "school box" : "ship to me"}
                   </span>
                 </div>
                 {o.needsHandoff ? (
-                  <HandoffForm orderId={o.id} action={confirmHandoff.bind(null, token, o.id)} />
+                  <HandoffForm
+                    orderId={o.id}
+                    action={confirmHandoff.bind(null, token, o.id)}
+                  />
                 ) : o.locked ? (
-                  <p className="sc-error">Locked after too many wrong codes. Splashy Cam will sort it out with you.</p>
+                  <p className="sc-error">
+                    Locked after too many wrong codes. Splashy Cam will sort it
+                    out with you.
+                  </p>
                 ) : o.handedOff ? (
                   <p className="sc-handoff__done">✓ Handed off</p>
                 ) : o.shipping === "alone" ? (

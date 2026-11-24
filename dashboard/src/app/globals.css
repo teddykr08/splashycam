@@ -775,6 +775,184 @@ body {
   outline-offset: 3px;
 }
 
+/* ---- admin (/admin): plain and dense, still on-brand ---- */
+.sc-admin {
+  min-height: 100vh;
+  padding: 16px;
+  background: var(--sc-cream);
+}
+
+.sc-admin__wrap {
+  display: grid;
+  gap: 18px;
+  max-width: 1100px;
+  margin-inline: auto;
+}
+
+.sc-admin__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sc-admin__title {
+  margin: 0;
+  font-family: var(--sc-display);
+  font-size: 1.6rem;
+}
+
+.sc-admin__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-weight: 700;
+}
+
+.sc-admin__nav a,
+.sc-admin__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sc-ink);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.sc-admin__section {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: var(--sc-outline) solid var(--sc-ink);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.sc-admin__section h2 {
+  margin: 0;
+  font-family: var(--sc-display);
+  font-size: 1.4rem;
+}
+
+.sc-admin__section h3 {
+  margin: 8px 0 0;
+  font-size: 1rem;
+}
+
+.sc-admin__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 2px dashed color-mix(in srgb, var(--sc-ink) 20%, transparent);
+}
+
+.sc-admin__row > div {
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.sc-admin__line {
+  margin: 0;
+}
+
+.sc-admin__inlineform {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sc-admin__inlineform .sc-field,
+.sc-admin__form .sc-field {
+  min-height: 44px;
+  padding: 6px 12px;
+  font-size: 1rem;
+}
+
+.sc-admin__inlineform .sc-btn {
+  min-height: 44px;
+  padding: 6px 18px;
+  font-size: 1rem;
+}
+
+.sc-admin__inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.sc-admin__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.sc-admin__form {
+  display: grid;
+  gap: 8px;
+}
+
+.sc-admin__created {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  overflow-wrap: anywhere;
+  background: color-mix(in srgb, var(--sc-sky) 20%, #fff);
+}
+
+.sc-admin__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 1.2rem;
+}
+
+.sc-admin__small {
+  font-size: 0.8rem;
+  opacity: 0.75;
+  overflow-wrap: anywhere;
+}
+
+.sc-admin__addr {
+  font-size: 0.9rem;
+}
+
+.sc-admin__table {
+  overflow-x: auto;
+}
+
+.sc-admin__table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.sc-admin__table th,
+.sc-admin__table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--sc-ink) 15%, transparent);
+  text-align: left;
+  vertical-align: top;
+}
+
+.sc-admin__flagged {
+  background: #fff1e0;
+}
+
+.sc-admin-login__form {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  max-width: 360px;
+  text-align: start;
+}
+
 /* ---- 5: footer ---- */
 .sc-footer {
   display: grid;

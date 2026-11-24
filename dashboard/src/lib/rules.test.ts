@@ -40,6 +40,12 @@ describe("incoming orders", () => {
     expect(classifyOrder("box", false)).toEqual({ shipping: "alone", flag: "box_without_host" });
   });
 
+  it("box order on a host with boxes off ships alone, flagged; solo cut", () => {
+    expect(classifyOrder("box", true, false)).toEqual({ shipping: "alone", flag: "box_host_no_boxes" });
+    expect(hostCutCents(1, "alone", true)).toBe(150);
+    expect(classifyOrder("alone", true, false)).toEqual({ shipping: "alone", flag: null });
+  });
+
   it("ship-to-me orders ship alone", () => {
     expect(classifyOrder("alone", true)).toEqual({ shipping: "alone", flag: null });
   });

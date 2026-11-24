@@ -35,11 +35,19 @@ export function orderPriceCents(units: number, delivery: Delivery): number {
 }
 
 /**
- * How a new order should be recorded. A "School box" order that arrives
- * without a host can't join a box: it ships alone and is flagged for the owner.
+ * How a new order should be recorded. A "School box" order that can't join a
+ * box ships alone and is flagged for the owner (the buyer paid the box price):
+ * - no host → "box_without_host"
+ * - the host has boxes turned off (boxes_enabled = false) → "box_host_no_boxes";
+ *   that host earns the solo cut.
  */
-export function classifyOrder(delivery: Delivery, hasHost: boolean): { shipping: Shipping; flag: string | null } {
+export function classifyOrder(
+  delivery: Delivery,
+  hasHost: boolean,
+  hostBoxesEnabled = true,
+): { shipping: Shipping; flag: string | null } {
   if (delivery === "box" && !hasHost) return { shipping: "alone", flag: "box_without_host" };
+  if (delivery === "box" && !hostBoxesEnabled) return { shipping: "alone", flag: "box_host_no_boxes" };
   return { shipping: delivery, flag: null };
 }
 

@@ -29,14 +29,18 @@ export async function recordOrder(db: Db, parsed: ParsedOrder): Promise<RecordRe
 
   const flags = [...parsed.flags];
   let hostId: string | null = null;
+  let hostBoxesEnabled = true;
   if (parsed.hostCode) {
-    const host = await db.from("hosts").select("id").eq("code", parsed.hostCode).maybeSingle();
+    const host = await db.from("hosts").select("id, boxes_enabled").eq("code", parsed.hostCode).maybeSingle();
     if (host.error) throw host.error;
-    if (host.data) hostId = host.data.id;
+    if (host.data) {
+      hostId = host.data.id;
+      hostBoxesEnabled = host.data.boxes_enabled;
+    }
     else flags.push("unknown_host_code");
   }
 
-  const classified = classifyOrder(parsed.delivery, hostId !== null);
+  const classified = classifyOrder(parsed.delivery, hostId !== null, hostBoxesEnabled);
   const shipping = classified.shipping;
   if (classified.flag) flags.push(classified.flag);
 
