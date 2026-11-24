@@ -42,7 +42,7 @@ describe("incoming orders", () => {
 
   it("box order on a host with boxes off ships alone, flagged; solo cut", () => {
     expect(classifyOrder("box", true, false)).toEqual({ shipping: "alone", flag: "box_host_no_boxes" });
-    expect(hostCutCents(1, "alone", true)).toBe(150);
+    expect(hostCutCents(1, "alone", true)).toBe(200);
     expect(classifyOrder("alone", true, false)).toEqual({ shipping: "alone", flag: null });
   });
 
@@ -52,11 +52,11 @@ describe("incoming orders", () => {
 });
 
 describe("host cut", () => {
-  it("$3 per box unit, $1.50 per solo unit", () => {
-    expect(hostCutCents(1, "box", true)).toBe(300);
-    expect(hostCutCents(4, "box", true)).toBe(1200);
-    expect(hostCutCents(1, "alone", true)).toBe(150);
-    expect(hostCutCents(3, "alone", true)).toBe(450);
+  it("$3.50 per box unit, $2.00 per solo unit", () => {
+    expect(hostCutCents(1, "box", true)).toBe(350);
+    expect(hostCutCents(4, "box", true)).toBe(1400);
+    expect(hostCutCents(1, "alone", true)).toBe(200);
+    expect(hostCutCents(3, "alone", true)).toBe(600);
   });
 
   it("nothing without a host code", () => {

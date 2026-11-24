@@ -8,7 +8,7 @@
  * How it works (2026-11-22 rules):
  * - Two Shopify variants, one option "Delivery": "School box" $15/unit and
  *   "Ship to me" $19/unit. Quantity is the number of units; no pack discounts.
- * - Host cut: $3 per box unit, $1.50 per solo unit, only on orders with a host.
+ * - Host cut: $3.50 per box unit, $2.00 per solo unit, only on orders with a host.
  *   It's owed only once the unit counts as delivered (see unitStatus).
  * - Boxes: before the game, one box collects everything and ships 7 days before
  *   the start. During the game, a box ships 24h after its 5th order or 3 days
@@ -21,7 +21,7 @@
 // ---------------------------------------------------------------- prices
 
 export const UNIT_PRICE_CENTS = { box: 1500, alone: 1900 } as const;
-export const HOST_CUT_CENTS = { box: 300, alone: 150 } as const;
+export const HOST_CUT_CENTS = { box: 350, alone: 200 } as const;
 
 /** What the buyer picked (the variant). */
 export type Delivery = "box" | "alone";
@@ -52,7 +52,7 @@ export function classifyOrder(
 }
 
 /**
- * Host cut for an order: $3 per box unit, $1.50 per solo unit, 0 without a host.
+ * Host cut for an order: $3.50 per box unit, $2.00 per solo unit, 0 without a host.
  * Based on how it ships: a box order with no host has no host, so 0 anyway.
  * This is the amount that becomes owed once the units are delivered.
  */

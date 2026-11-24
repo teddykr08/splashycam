@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { AddHostForm } from "./AddHostForm";
 import {
@@ -53,6 +54,7 @@ function Address({ value }: { value: unknown }) {
 
 async function Admin({ searchParams }: { searchParams: PageProps<"/admin">["searchParams"] }) {
   if (!(await isAdmin())) redirect("/admin/login");
+  await connection(); // always rendered per request (it reads the clock)
   const sp = await searchParams;
   const school = typeof sp.school === "string" && sp.school ? sp.school : null;
 
