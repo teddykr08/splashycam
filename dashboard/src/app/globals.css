@@ -712,6 +712,69 @@ body {
   color: #1b7a3a;
 }
 
+/* ---- buyer order page (/o/[orderId]/[sig]) ---- */
+.sc-pickup {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  text-align: center;
+  background: var(--sc-cream);
+}
+
+.sc-pickup__label {
+  margin: 0;
+  font-family: var(--sc-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.sc-pickup__code {
+  margin: 4px 0;
+  font-family: var(--sc-display);
+  font-size: clamp(2.6rem, 14vw, 3.6rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  text-shadow: 3px 3px 0 var(--sc-orange);
+  user-select: all;
+}
+
+.sc-buyer__status {
+  margin: 0;
+  font-family: var(--sc-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.sc-buyer__card {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  text-align: start;
+}
+
+.sc-gotit {
+  display: grid;
+  gap: 8px;
+}
+
+.sc-gotit__buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.sc-gotit__btn {
+  padding-inline: 12px;
+  opacity: 0.85;
+}
+
+.sc-gotit__btn--on {
+  opacity: 1;
+  outline: 3px solid var(--sc-ink);
+  outline-offset: 3px;
+}
+
 /* ---- 5: footer ---- */
 .sc-footer {
   display: grid;

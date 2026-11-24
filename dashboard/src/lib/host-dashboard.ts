@@ -13,6 +13,7 @@ export interface HostOrderRow {
   box_id: string | null;
   pickup_code: string | null;
   handed_off_at: string | null;
+  handoff_locked_at: string | null;
   buyer_response: string;
   host_cut_cents: number | null;
   shipped_at: string | null;
@@ -39,6 +40,8 @@ export interface HostOrderView {
   shipping: Shipping;
   /** Box orders still waiting for the host to type the buyer's code. */
   needsHandoff: boolean;
+  /** Too many wrong codes: locked until the owner clears it. */
+  locked: boolean;
   handedOff: boolean;
   owed: boolean;
   createdAt: string;
@@ -94,7 +97,8 @@ export function buildHostDashboard(
       buyerName: o.buyer_name,
       units: o.units,
       shipping: o.shipping,
-      needsHandoff: o.shipping === "box" && !!o.pickup_code && !o.handed_off_at,
+      needsHandoff: o.shipping === "box" && !!o.pickup_code && !o.handed_off_at && !o.handoff_locked_at,
+      locked: !o.handed_off_at && !!o.handoff_locked_at,
       handedOff: !!o.handed_off_at,
       owed,
       createdAt: o.created_at,

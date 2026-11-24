@@ -156,6 +156,28 @@ export function normalizePickupCode(input: string): string {
     .replace(/[IL]/g, "1");
 }
 
+/** Wrong pickup-code tries allowed per order per hour before the order locks. */
+export const HANDOFF_MAX_WRONG = 5;
+export const HANDOFF_WINDOW_MS = HOUR_MS;
+
+export interface HandoffAttempts {
+  /** Wrong tries counted in the current window. */
+  count: number;
+  /** When the current window started (first wrong try in it). */
+  since: Date | null;
+}
+
+/**
+ * Records one wrong pickup-code try. The window is 1 hour from the first wrong
+ * try in it; 5 wrong tries inside a window lock the order (until the owner
+ * clears it) and flag it.
+ */
+export function recordWrongCode(attempts: HandoffAttempts, now: Date): HandoffAttempts & { lock: boolean } {
+  const fresh = !attempts.since || now.getTime() - attempts.since.getTime() >= HANDOFF_WINDOW_MS;
+  const next = fresh ? { count: 1, since: now } : { count: attempts.count + 1, since: attempts.since };
+  return { ...next, lock: next.count >= HANDOFF_MAX_WRONG };
+}
+
 export type BuyerResponse = "yes" | "no" | "none";
 export const DELIVERED_AFTER_DAYS = 7;
 

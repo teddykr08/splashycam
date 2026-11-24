@@ -4,6 +4,7 @@ import {
   classifyOrder,
   decideBox,
   generatePickupCode,
+  recordWrongCode,
   hostCutCents,
   normalizePickupCode,
   orderPriceCents,
@@ -131,6 +132,27 @@ describe("pickup codes", () => {
   it("normalizes what a host types", () => {
     expect(normalizePickupCode(" ab-c 1o9 ")).toBe("ABC109");
     expect(normalizePickupCode("lixo")).toBe("11X0"); // L→1, I→1, X stays, O→0
+  });
+});
+
+describe("wrong pickup-code tries", () => {
+  const t = (min: number) => new Date(Date.UTC(2027, 2, 1, 12, min));
+
+  it("locks on the 5th wrong try within an hour", () => {
+    let a = { count: 0, since: null as Date | null };
+    for (let i = 1; i <= 4; i++) {
+      const r = recordWrongCode(a, t(i * 5));
+      expect(r.lock).toBe(false);
+      a = r;
+    }
+    expect(a.count).toBe(4);
+    expect(recordWrongCode(a, t(30)).lock).toBe(true);
+  });
+
+  it("the window resets an hour after its first wrong try", () => {
+    const a = { count: 4, since: t(0) };
+    const r = recordWrongCode(a, t(60));
+    expect(r).toEqual({ count: 1, since: t(60), lock: false });
   });
 });
 

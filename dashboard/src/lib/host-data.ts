@@ -35,7 +35,7 @@ export async function loadHostDashboard(token: string): Promise<{ host: Dashboar
   const [orders, boxes, payouts] = await Promise.all([
     db
       .from("orders")
-      .select("id, buyer_name, units, shipping, status, box_id, pickup_code, handed_off_at, buyer_response, host_cut_cents, shipped_at, created_at")
+      .select("id, buyer_name, units, shipping, status, box_id, pickup_code, handed_off_at, handoff_locked_at, buyer_response, host_cut_cents, shipped_at, created_at")
       .eq("host_id", host.id),
     db.from("boxes").select("id, status, opened_at, filled_at, delivered_at").eq("host_id", host.id),
     db.from("payouts").select("amount_cents, paid_at").eq("host_id", host.id),

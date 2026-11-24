@@ -154,6 +154,9 @@ export type Database = {
       };
       orders: {
         Row: {
+          handoff_locked_at: string | null;
+          handoff_wrong_count: number;
+          handoff_wrong_since: string | null;
           shipped_at: string | null;
           pickup_code: string | null;
           payout_id: string | null;
@@ -177,6 +180,9 @@ export type Database = {
           units: number;
         };
         Insert: {
+          handoff_locked_at?: string | null;
+          handoff_wrong_count?: number;
+          handoff_wrong_since?: string | null;
           shipped_at?: string | null;
           pickup_code?: string | null;
           payout_id?: string | null;
@@ -200,6 +206,9 @@ export type Database = {
           units: number;
         };
         Update: {
+          handoff_locked_at?: string | null;
+          handoff_wrong_count?: number;
+          handoff_wrong_since?: string | null;
           shipped_at?: string | null;
           pickup_code?: string | null;
           payout_id?: string | null;

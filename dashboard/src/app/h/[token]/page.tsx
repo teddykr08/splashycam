@@ -114,6 +114,8 @@ async function Dashboard({ params }: { params: PageProps<"/h/[token]">["params"]
                 </div>
                 {o.needsHandoff ? (
                   <HandoffForm orderId={o.id} action={confirmHandoff.bind(null, token, o.id)} />
+                ) : o.locked ? (
+                  <p className="sc-error">Locked after too many wrong codes. Splashy Cam will sort it out with you.</p>
                 ) : o.handedOff ? (
                   <p className="sc-handoff__done">✓ Handed off</p>
                 ) : o.shipping === "alone" ? (

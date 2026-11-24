@@ -11,6 +11,7 @@ const order = (over: Partial<HostOrderRow>): HostOrderRow => ({
   box_id: "b1",
   pickup_code: "ABC123",
   handed_off_at: null,
+  handoff_locked_at: null,
   buyer_response: "none",
   host_cut_cents: 300,
   shipped_at: null,
@@ -54,6 +55,11 @@ describe("host dashboard", () => {
     expect(d.orders.map((o) => o.id)).toEqual(["wait", "done"]);
     expect(d.orders[0].needsHandoff).toBe(true);
     expect(d.orders[1].needsHandoff).toBe(false);
+  });
+
+  it("a locked order isn't offered for handoff", () => {
+    const d = buildHostDashboard({ game_starts_at: null }, [order({ id: "x", handoff_locked_at: "2027-03-19T00:00:00Z" })], [openBox], [], now);
+    expect(d.orders[0]).toMatchObject({ needsHandoff: false, locked: true });
   });
 
   it("open box progress and ship date", () => {
