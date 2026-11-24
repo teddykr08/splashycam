@@ -55,6 +55,11 @@ export function Footer() {
         </svg>
         <span>{`@${INSTAGRAM}`}</span>
       </a>
+      <nav className="sc-footer__nav" aria-label="Site">
+        <Link href="/">home</Link>
+        <span aria-hidden="true">·</span>
+        <Link href="/hosts">become an affiliate</Link>
+      </nav>
       <p className="sc-footer__copy">&copy; 2026 Splashy Cam</p>
     </footer>
   );

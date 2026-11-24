@@ -54,6 +54,9 @@ export default function HostsPage() {
               You&apos;re the most direct line to your players. Get a cut of every sale you bring in, plus more ways to earn
               down the line. You get out of it as much as you put in.
             </p>
+            <a className="sc-btn sc-hosts__jump" href="#signup">
+              Sign me up <span aria-hidden="true">↓</span>
+            </a>
 
             <Clip small />
 

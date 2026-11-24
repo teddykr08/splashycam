@@ -8,13 +8,13 @@ const POINTS = ["clips onto your water gun in seconds", "both hands free, phone 
 export default function ProductPage() {
   return (
     <>
+      <Link href="/hosts" className="sc-topbar">
+        Run your school&apos;s game? <strong>Become an affiliate</strong> <span aria-hidden="true">→</span>
+      </Link>
       <main>
         <section className="sc-section sc-hero">
           <div className="sc-wrap sc-stack">
             <Logo />
-            <Link href="/hosts" className="sc-hostlink">
-              Run your school&apos;s game? Become an affiliate <span aria-hidden="true">→</span>
-            </Link>
 
             <h1 className="sc-title sc-pitch">A phone mount for any water gun. Film your kills hands free.</h1>
 
