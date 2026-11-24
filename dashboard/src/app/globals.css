@@ -314,21 +314,86 @@ body {
   text-shadow: 3px 3px 0 var(--sc-orange);
 }
 
-.sc-waitlist {
+/* reservation form / buy flow */
+.sc-order-form {
   display: grid;
-  gap: 12px;
+  gap: 16px;
+  width: 100%;
   margin-block-start: 6px;
+  background: #fff;
   text-align: start;
 }
 
-@media (min-width: 560px) {
-  .sc-waitlist {
-    grid-template-columns: 1fr auto;
-  }
+.sc-order-placeholder {
+  min-height: 420px; /* keeps the page from jumping while the form loads */
+}
 
-  .sc-waitlist .sc-error {
-    grid-column: 1 / -1;
+.sc-field--locked {
+  background: color-mix(in srgb, var(--sc-sky) 12%, #fff);
+  cursor: default;
+}
+
+.sc-field--qty {
+  max-width: 120px;
+}
+
+.sc-delivery__options {
+  display: grid;
+  gap: 10px;
+}
+
+@media (min-width: 480px) {
+  .sc-delivery__options {
+    grid-template-columns: 1fr 1fr;
   }
+}
+
+.sc-delivery__option {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 60px;
+  padding: 10px 16px;
+  border: var(--sc-outline) solid var(--sc-ink);
+  border-radius: 16px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.sc-delivery__option:has(input:checked) {
+  background: color-mix(in srgb, var(--sc-orange) 22%, #fff);
+  box-shadow: 3px 3px 0 var(--sc-ink);
+}
+
+.sc-delivery__option:has(input:focus-visible) {
+  outline: 3px solid var(--sc-sky);
+  outline-offset: 3px;
+}
+
+.sc-delivery__option input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  flex: none;
+  accent-color: var(--sc-ink);
+}
+
+.sc-delivery__option span {
+  display: grid;
+}
+
+.sc-delivery__option strong {
+  font-family: var(--sc-display);
+  font-weight: 600;
+}
+
+.sc-delivery__option small {
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.sc-delivery__only {
+  margin: 0;
 }
 
 .sc-points {
@@ -1015,4 +1080,23 @@ body {
   margin: 0;
   font-size: 0.8rem;
   opacity: 0.7;
+}
+
+/* admin: reservations */
+.sc-admin__group {
+  border-top: 2px solid color-mix(in srgb, var(--sc-ink) 15%, transparent);
+  padding-block: 8px;
+}
+
+.sc-admin__group > summary {
+  cursor: pointer;
+  padding-block: 4px;
+}
+
+.sc-admin__emails {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-inline-start: 18px;
+  overflow-wrap: anywhere;
 }

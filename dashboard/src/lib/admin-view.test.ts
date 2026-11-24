@@ -3,6 +3,7 @@ import {
   buildShipQueue,
   inventory,
   makeHostCode,
+  reservationsBySchool,
   NO_SCHOOL,
   ordersForAdmin,
   owedByHost,
@@ -159,5 +160,34 @@ describe("host codes", () => {
     expect(makeHostCode("St. Ignatius College Prep", () => 10)).toBe("ST-AAA");
     expect(makeHostCode("Woodrow Wilson Classical High", () => 1)).toBe("WOODROW-111");
     expect(makeHostCode("!!!", () => 2)).toBe("HOST-222");
+  });
+});
+
+describe("reservationsBySchool", () => {
+  const r = (id: string, school: string, at: string, delivery = "alone") => ({
+    id,
+    name: id,
+    instagram: id,
+    email: null,
+    school,
+    delivery,
+    host_code: null,
+    created_at: at,
+  });
+
+  it("groups case-insensitively, newest first, newest school first", () => {
+    const groups = reservationsBySchool([
+      r("a", "Lincoln High", "2026-12-01T10:00:00Z", "box"),
+      r("b", "Roosevelt", "2026-12-02T10:00:00Z"),
+      r("c", "lincoln high", "2026-12-03T10:00:00Z"),
+    ]);
+    expect(groups.map((g) => [g.school, g.rows.map((x) => x.id), g.box])).toEqual([
+      ["lincoln high", ["c", "a"], 1],
+      ["Roosevelt", ["b"], 0],
+    ]);
+  });
+
+  it("nothing in, nothing out", () => {
+    expect(reservationsBySchool([])).toEqual([]);
   });
 });

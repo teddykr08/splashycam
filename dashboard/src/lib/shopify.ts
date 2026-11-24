@@ -11,10 +11,12 @@
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Delivery } from "./rules";
+import { HOST_ATTRIBUTE, HOST_CODE, VARIANT_TITLES } from "./variants";
 
-export const HOST_ATTRIBUTE = "host";
-const DELIVERY_VALUES: Record<string, Delivery> = { "School box": "box", "Ship to me": "alone" };
-const HOST_CODE = /^[A-Z0-9-]{2,32}$/;
+export { HOST_ATTRIBUTE };
+const DELIVERY_VALUES: Record<string, Delivery> = Object.fromEntries(
+  Object.entries(VARIANT_TITLES).map(([delivery, title]) => [title, delivery as Delivery]),
+);
 
 /**
  * True when `hmacHeader` (X-Shopify-Hmac-Sha256) is the base64 HMAC-SHA256 of the

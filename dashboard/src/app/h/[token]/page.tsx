@@ -47,7 +47,7 @@ async function Dashboard({
   const { token } = await params;
   const data = await loadHostDashboard(token);
   if (!data) notFound();
-  const { host, dashboard } = data;
+  const { host, dashboard, reservations } = data;
   const shareUrl = `${SITE}/?host=${encodeURIComponent(host.code)}`;
   const box = dashboard.openBox;
 
@@ -67,6 +67,20 @@ async function Dashboard({
         </p>
         <CopyLink url={shareUrl} />
       </section>
+
+      <div className="sc-card sc-stat sc-hostdash__reserved">
+        <span className="sc-stat__label">
+          reserved at {host.school ?? "your school"}
+        </span>
+        <strong className="sc-stat__num">{reservations}</strong>
+        <span className="sc-hint">
+          {reservations === 0
+            ? "No one yet. Share your link so they can reserve."
+            : reservations === 1
+              ? "person has reserved one so far."
+              : "people have reserved one so far."}
+        </span>
+      </div>
 
       <section className="sc-hostdash__money" aria-label="Your earnings">
         <div className="sc-card sc-stat">

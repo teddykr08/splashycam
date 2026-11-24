@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { checkGameDates, DATE_MESSAGES, isBot, parseDate, parseHostApplication, parseInstagram, parseWaitlist } from "./launch";
+import {
+  checkGameDates,
+  DATE_MESSAGES,
+  isBot,
+  normalizeSchool,
+  parseDate,
+  parseEmail,
+  parseHostApplication,
+  parseInstagram,
+  parseReservation,
+} from "./launch";
 
 const form = (fields: Record<string, string>) => {
   const fd = new FormData();
@@ -7,14 +17,14 @@ const form = (fields: Record<string, string>) => {
   return fd;
 };
 
-describe("waitlist", () => {
+describe("email", () => {
   it("accepts and lowercases a valid email", () => {
-    expect(parseWaitlist(form({ email: "  Sam@Example.COM " }))).toEqual({ ok: true, data: { email: "sam@example.com" } });
+    expect(parseEmail("  Sam@Example.COM ")).toBe("sam@example.com");
   });
 
   it("rejects missing or malformed email", () => {
     for (const email of ["", "sam", "sam@", "sam@example", "a b@c.d"]) {
-      expect(parseWaitlist(form({ email })).ok).toBe(false);
+      expect(parseEmail(email)).toBeNull();
     }
   });
 
@@ -130,5 +140,51 @@ describe("game dates", () => {
     const r = parseHostApplication(fd);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors).toEqual({ game_ends_on: DATE_MESSAGES.order });
+  });
+});
+
+describe("reservation", () => {
+  const good = { name: "Sam Lee", instagram: "https://instagram.com/sam.lee/", email: "", school: "  Lincoln   High " };
+  const anyone = { hostSchool: null, options: ["alone" as const] };
+  const boxHost = { hostSchool: "Lincoln High", options: ["box" as const, "alone" as const] };
+
+  it("no host link: typed school (tidied), Ship to me, handle stripped, email optional", () => {
+    expect(parseReservation(form(good), anyone)).toEqual({
+      ok: true,
+      data: { name: "Sam Lee", instagram: "sam.lee", email: null, school: "Lincoln High", delivery: "alone" },
+    });
+  });
+
+  it("no host link: a posted School box is ignored, only Ship to me is possible", () => {
+    const r = parseReservation(form({ ...good, delivery: "box" }), anyone);
+    expect(r.ok && r.data.delivery).toBe("alone");
+  });
+
+  it("host link: school comes from the host, whatever was posted", () => {
+    const r = parseReservation(form({ ...good, school: "Somewhere Else", delivery: "box" }), boxHost);
+    expect(r.ok && r.data).toMatchObject({ school: "Lincoln High", delivery: "box" });
+  });
+
+  it("host link with boxes on: must pick one of the two", () => {
+    const r = parseReservation(form(good), boxHost);
+    expect(r.ok).toBe(false);
+    expect(!r.ok && r.errors.delivery).toBeTruthy();
+    expect(parseReservation(form({ ...good, delivery: "pickup" }), boxHost).ok).toBe(false);
+  });
+
+  it("host link with boxes off: Ship to me only", () => {
+    const r = parseReservation(form({ ...good, delivery: "box" }), { hostSchool: "Lincoln High", options: ["alone"] });
+    expect(r.ok && r.data.delivery).toBe("alone");
+  });
+
+  it("instagram and name required; a bad email is an error, a blank one isn't", () => {
+    const r = parseReservation(form({ name: "", instagram: "@", email: "nope", school: "" }), anyone);
+    expect(!r.ok && Object.keys(r.errors).sort()).toEqual(["email", "instagram", "name", "school"]);
+    const ok = parseReservation(form({ ...good, email: " Sam@Example.com " }), anyone);
+    expect(ok.ok && ok.data.email).toBe("sam@example.com");
+  });
+
+  it("normalizeSchool collapses spaces", () => {
+    expect(normalizeSchool("  a 	 b  ")).toBe("a b");
   });
 });

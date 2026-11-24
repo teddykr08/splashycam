@@ -143,6 +143,50 @@ export type Database = {
         };
         Relationships: [];
       };
+      reservations: {
+        Row: {
+          created_at: string;
+          delivery: string;
+          email: string | null;
+          host_code: string | null;
+          host_id: string | null;
+          id: string;
+          instagram: string;
+          name: string;
+          school: string;
+        };
+        Insert: {
+          created_at?: string;
+          delivery: string;
+          email?: string | null;
+          host_code?: string | null;
+          host_id?: string | null;
+          id?: string;
+          instagram: string;
+          name: string;
+          school: string;
+        };
+        Update: {
+          created_at?: string;
+          delivery?: string;
+          email?: string | null;
+          host_code?: string | null;
+          host_id?: string | null;
+          id?: string;
+          instagram?: string;
+          name?: string;
+          school?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reservations_host_id_fkey";
+            columns: ["host_id"];
+            isOneToOne: false;
+            referencedRelation: "hosts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       waitlist: {
         Row: {
           created_at: string;

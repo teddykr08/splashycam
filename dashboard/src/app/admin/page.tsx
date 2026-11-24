@@ -15,9 +15,18 @@ import {
 } from "./actions";
 import { isAdmin } from "@/lib/admin-auth";
 import { loadAdminData } from "@/lib/admin-data";
-import { buildShipQueue, inventory, NO_SCHOOL, ordersForAdmin, owedByHost, schoolOptions } from "@/lib/admin-view";
+import {
+  buildShipQueue,
+  inventory,
+  NO_SCHOOL,
+  ordersForAdmin,
+  owedByHost,
+  reservationsBySchool,
+  schoolOptions,
+} from "@/lib/admin-view";
 import { dollars } from "@/lib/host-dashboard";
-import { SHOP_TIME_ZONE } from "@/lib/rules";
+import { SHOP_TIME_ZONE, type Delivery } from "@/lib/rules";
+import { VARIANT_TITLES } from "@/lib/variants";
 
 export const metadata: Metadata = { title: "Admin · Splashy Cam", robots: { index: false, follow: false } };
 
@@ -66,6 +75,7 @@ async function Admin({ searchParams }: { searchParams: PageProps<"/admin">["sear
   const orders = ordersForAdmin(data.hosts, data.boxes, data.orders, now, school);
   const schools = schoolOptions(data.hosts);
   const hostInstagrams = new Set(data.hosts.map((h) => h.instagram?.toLowerCase()).filter(Boolean));
+  const reservedBySchool = reservationsBySchool(data.reservations);
   const flaggedCount = ordersForAdmin(data.hosts, data.boxes, data.orders, now).filter((v) => v.flags.length).length;
 
   return (
@@ -80,6 +90,7 @@ async function Admin({ searchParams }: { searchParams: PageProps<"/admin">["sear
       </header>
       <nav className="sc-admin__nav" aria-label="Sections">
         <a href="#ship">Ship queue</a>
+        <a href="#reservations">Reservations ({data.reservations.length})</a>
         <a href="#inventory">Inventory</a>
         <a href="#hosts">Hosts</a>
         <a href="#payouts">Payouts</a>
@@ -147,6 +158,63 @@ async function Admin({ searchParams }: { searchParams: PageProps<"/admin">["sear
             {host?.school} · {host?.name} · {n} orders · ships {shipsAt ? when(shipsAt) : "?"}
           </p>
         ))}
+      </section>
+
+      {/* Reservations (pre-launch) + the old waitlist */}
+      <section id="reservations" className="sc-admin__section">
+        <h2>Reservations ({data.reservations.length} total)</h2>
+        {reservedBySchool.length === 0 && <p className="sc-hint">No reservations yet.</p>}
+        {reservedBySchool.map((g) => (
+          <details key={g.school.toLowerCase()} className="sc-admin__group" open={reservedBySchool.length <= 5}>
+            <summary>
+              <strong>{g.school}</strong> · {g.rows.length} reserved
+              {g.box > 0 && <> · {g.box} school box</>}
+            </summary>
+            <div className="sc-admin__table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>When</th>
+                    <th>Name</th>
+                    <th>Instagram</th>
+                    <th>Email</th>
+                    <th>Delivery</th>
+                    <th>Host code</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {g.rows.map((r) => (
+                    <tr key={r.id}>
+                      <td>{when(r.created_at)}</td>
+                      <td>{r.name}</td>
+                      <td>
+                        <a href={`https://www.instagram.com/${r.instagram}/`} target="_blank" rel="noopener noreferrer">
+                          @{r.instagram}
+                        </a>
+                      </td>
+                      <td>{r.email}</td>
+                      <td>{VARIANT_TITLES[r.delivery as Delivery] ?? r.delivery}</td>
+                      <td>{r.host_code}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        ))}
+
+        <h3>Old waitlist emails ({data.waitlist.length})</h3>
+        {data.waitlist.length === 0 ? (
+          <p className="sc-hint">None.</p>
+        ) : (
+          <ul className="sc-admin__emails">
+            {data.waitlist.map((w) => (
+              <li key={w.email}>
+                {w.email} <span className="sc-admin__small">· {when(w.created_at)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* 2. Inventory */}

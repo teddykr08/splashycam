@@ -4,6 +4,8 @@
  * writing anything. The rules mirror the checks in migration 0004.
  */
 
+import type { Delivery } from "./rules";
+
 export const HONEYPOT_FIELD = "website"; // hidden field; bots fill it, people don't
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -23,11 +25,6 @@ export function isBot(fd: FormData): boolean {
 export function parseEmail(raw: string): string | null {
   const email = raw.trim().toLowerCase();
   return email.length <= 254 && EMAIL.test(email) ? email : null;
-}
-
-export function parseWaitlist(fd: FormData): Parsed<{ email: string }, "email"> {
-  const email = parseEmail(text(fd, "email"));
-  return email ? { ok: true, data: { email } } : { ok: false, errors: { email: "Enter a valid email." } };
 }
 
 export interface HostApplication {
@@ -129,4 +126,53 @@ export function parseHostApplication(fd: FormData): Parsed<HostApplication, Host
       player_count,
     },
   };
+}
+
+export interface Reservation {
+  name: string;
+  instagram: string;
+  email: string | null;
+  school: string;
+  delivery: Delivery;
+}
+export type ReservationField = keyof Reservation;
+
+/** "  Lincoln   High " → "Lincoln High", so the one-per-school check isn't fooled by spacing. */
+export function normalizeSchool(raw: string): string {
+  return raw.trim().replace(/\s+/g, " ");
+}
+
+/**
+ * The free reservation form on "/". Through a host link the school comes from
+ * the host (the field is locked; whatever was posted is ignored). `options` are
+ * the delivery choices that visitor was offered (store.deliveryOptions).
+ */
+export function parseReservation(
+  fd: FormData,
+  ctx: { hostSchool: string | null; options: Delivery[] },
+): Parsed<Reservation, ReservationField> {
+  const errors: FieldErrors<ReservationField> = {};
+
+  const name = text(fd, "name");
+  if (name.length < 1 || name.length > 100) errors.name = "Enter your name.";
+
+  const instagram = parseInstagram(text(fd, "instagram"));
+  if (!instagram) errors.instagram = "Enter your Instagram handle, like @yourhandle.";
+
+  const emailRaw = text(fd, "email");
+  const email = emailRaw ? parseEmail(emailRaw) : null;
+  if (emailRaw && !email) errors.email = "Enter a valid email, or leave it blank.";
+
+  const school = ctx.hostSchool ?? normalizeSchool(text(fd, "school"));
+  if (school.length < 1 || school.length > 120) errors.school = "Enter your school.";
+
+  let delivery: Delivery | undefined = ctx.options.length === 1 ? ctx.options[0] : undefined;
+  if (!delivery) {
+    const picked = text(fd, "delivery") as Delivery;
+    if (ctx.options.includes(picked)) delivery = picked;
+    else errors.delivery = "Pick School box or Ship to me.";
+  }
+
+  if (Object.keys(errors).length) return { ok: false, errors };
+  return { ok: true, data: { name, instagram: instagram!, email, school, delivery: delivery! } };
 }

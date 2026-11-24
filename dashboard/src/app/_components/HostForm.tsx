@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { applyAsHost, type HostState } from "../actions";
 import { checkGameDates, type HostField } from "@/lib/launch";
-import { Honeypot } from "./WaitlistForm";
+import { Field, inputProps } from "./Field";
+import { Honeypot } from "./Honeypot";
 
 const initial: HostState = { status: "idle" };
 
@@ -98,44 +99,5 @@ function GameDates({ errors, values }: { errors: Errors; values: Values }) {
         </Field>
       </div>
     </fieldset>
-  );
-}
-
-function inputProps(id: HostField, errors: Errors, values: Values) {
-  return {
-    id,
-    defaultValue: values[id],
-    name: id,
-    className: "sc-field",
-    "aria-invalid": errors[id] ? true : undefined,
-    "aria-describedby": errors[id] ? `${id}-error` : undefined,
-  } as const;
-}
-
-function Field({
-  id,
-  label,
-  error,
-  small = false,
-  children,
-}: {
-  id: HostField;
-  label: string;
-  error?: string;
-  small?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <div className="sc-field-group">
-      <label className={small ? "sc-label sc-label--small" : "sc-label"} htmlFor={id}>
-        {label}
-      </label>
-      {children}
-      {error && (
-        <p className="sc-error" id={`${id}-error`}>
-          {error}
-        </p>
-      )}
-    </div>
   );
 }

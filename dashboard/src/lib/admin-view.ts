@@ -231,3 +231,37 @@ export function makeHostCode(school: string, randomInt: (max: number) => number)
   for (let i = 0; i < 3; i++) suffix += PICKUP_ALPHABET[randomInt(PICKUP_ALPHABET.length)];
   return `${word}-${suffix}`;
 }
+
+export interface AdminReservation {
+  id: string;
+  name: string;
+  instagram: string;
+  email: string | null;
+  school: string;
+  delivery: string;
+  host_code: string | null;
+  created_at: string;
+}
+
+export interface SchoolReservations {
+  school: string;
+  rows: AdminReservation[]; // newest first
+  box: number; // how many picked School box
+}
+
+/**
+ * Reservations grouped by school (case-insensitive), newest first inside each
+ * school, and the school with the most recent reservation first.
+ */
+export function reservationsBySchool(rows: AdminReservation[]): SchoolReservations[] {
+  const newestFirst = [...rows].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const groups = new Map<string, SchoolReservations>();
+  for (const r of newestFirst) {
+    const key = r.school.toLowerCase();
+    let g = groups.get(key);
+    if (!g) groups.set(key, (g = { school: r.school, rows: [], box: 0 }));
+    g.rows.push(r);
+    if (r.delivery === "box") g.box++;
+  }
+  return [...groups.values()];
+}
