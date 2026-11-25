@@ -9,7 +9,7 @@
  *   SHOPIFY_VARIANT_SHIP_TO_ME=<id>   numeric variant id of "Ship to me"
  *   SHOPIFY_STORE_DOMAIN=<domain>     optional, default splashy-cam.myshopify.com
  */
-import type { Delivery } from "./rules";
+import { UNIT_PRICE_CENTS, type Delivery } from "./rules";
 import { HOST_ATTRIBUTE } from "./variants";
 
 export const MAX_QUANTITY = 10;
@@ -67,4 +67,21 @@ export function cartPermalink(config: StoreConfig, delivery: Delivery, quantity:
   const url = new URL(`https://${config.domain}/cart/${config.variants[delivery]}:${quantity}`);
   if (hostCode) url.searchParams.set(`attributes[${HOST_ATTRIBUTE}]`, hostCode);
   return url.toString();
+}
+
+/** Whole dollars when it's a round amount: 1500 → "$15", 1950 → "$19.50". */
+export function priceText(cents: number): string {
+  return cents % 100 === 0 ? `$${cents / 100}` : `$${(cents / 100).toFixed(2)}`;
+}
+
+/**
+ * Price lines for the buy flow. Only rendered once the store is open; nothing
+ * priced shows while STORE_OPEN is off.
+ */
+export function priceLines(): Record<Delivery, string> {
+  const saving = UNIT_PRICE_CENTS.alone - UNIT_PRICE_CENTS.box;
+  return {
+    box: `${priceText(UNIT_PRICE_CENTS.box)} · save ${priceText(saving)} by ordering through your school`,
+    alone: priceText(UNIT_PRICE_CENTS.alone),
+  };
 }

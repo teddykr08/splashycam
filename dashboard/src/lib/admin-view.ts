@@ -2,6 +2,7 @@
  * The owner's admin dashboard (/admin), computed from raw rows. Pure (no
  * database), tested in admin-view.test.ts.
  */
+import { schoolKey } from "./launch";
 import { decideBox, PICKUP_ALPHABET, soloShipDate, unitStatus, type BuyerResponse, type Shipping } from "./rules";
 
 export interface AdminHost {
@@ -240,6 +241,7 @@ export interface AdminReservation {
   school: string;
   delivery: string;
   host_code: string | null;
+  host_id: string | null;
   created_at: string;
 }
 
@@ -250,18 +252,50 @@ export interface SchoolReservations {
 }
 
 /**
- * Reservations grouped by school (case-insensitive), newest first inside each
- * school, and the school with the most recent reservation first.
+ * Reservations grouped by school (loosely: schoolKey, so "Lincoln HS" and
+ * "Lincoln High School" are one group, labeled with the newest spelling),
+ * newest first inside each school, and the school with the most recent
+ * reservation first.
  */
 export function reservationsBySchool(rows: AdminReservation[]): SchoolReservations[] {
   const newestFirst = [...rows].sort((a, b) => b.created_at.localeCompare(a.created_at));
   const groups = new Map<string, SchoolReservations>();
   for (const r of newestFirst) {
-    const key = r.school.toLowerCase();
+    const key = schoolKey(r.school);
     let g = groups.get(key);
     if (!g) groups.set(key, (g = { school: r.school, rows: [], box: 0 }));
     g.rows.push(r);
     if (r.delivery === "box") g.box++;
   }
   return [...groups.values()];
+}
+
+export interface UnmatchedSchool {
+  key: string;
+  /** Each spelling people typed, with how many used it. */
+  names: { school: string; count: number }[];
+  total: number;
+}
+
+/**
+ * Reservations made without a host link whose school matches no host's school.
+ * Sorted by key so near-duplicates ("lincoln", "lincon") sit next to each other.
+ */
+export function unmatchedSchools(rows: AdminReservation[], hosts: Pick<AdminHost, "school">[]): UnmatchedSchool[] {
+  const hostKeys = new Set(hosts.map((h) => h.school).filter((s): s is string => !!s).map(schoolKey));
+  const groups = new Map<string, Map<string, number>>();
+  for (const r of rows) {
+    if (r.host_id) continue;
+    const key = schoolKey(r.school);
+    if (hostKeys.has(key)) continue;
+    const names = groups.get(key) ?? new Map<string, number>();
+    names.set(r.school, (names.get(r.school) ?? 0) + 1);
+    groups.set(key, names);
+  }
+  return [...groups.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, names]) => {
+      const list = [...names.entries()].map(([school, count]) => ({ school, count })).sort((a, b) => b.count - a.count);
+      return { key, names: list, total: list.reduce((n, x) => n + x.count, 0) };
+    });
 }

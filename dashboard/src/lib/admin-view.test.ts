@@ -4,6 +4,7 @@ import {
   inventory,
   makeHostCode,
   reservationsBySchool,
+  unmatchedSchools,
   NO_SCHOOL,
   ordersForAdmin,
   owedByHost,
@@ -164,7 +165,7 @@ describe("host codes", () => {
 });
 
 describe("reservationsBySchool", () => {
-  const r = (id: string, school: string, at: string, delivery = "alone") => ({
+  const r = (id: string, school: string, at: string, delivery = "alone", host_id: string | null = null) => ({
     id,
     name: id,
     instagram: id,
@@ -172,6 +173,7 @@ describe("reservationsBySchool", () => {
     school,
     delivery,
     host_code: null,
+    host_id,
     created_at: at,
   });
 
@@ -189,5 +191,28 @@ describe("reservationsBySchool", () => {
 
   it("nothing in, nothing out", () => {
     expect(reservationsBySchool([])).toEqual([]);
+  });
+
+  it("loose school names land in one group", () => {
+    const groups = reservationsBySchool([r("a", "Lincoln High School", "2026-12-01T10:00:00Z"), r("b", "lincoln hs", "2026-12-02T10:00:00Z")]);
+    expect(groups.map((g) => [g.school, g.rows.length])).toEqual([["lincoln hs", 2]]);
+  });
+
+  it("unmatched: no-link reservations whose school matches no host, near-duplicates side by side", () => {
+    const hosts = [{ school: "Lincoln High" }, { school: null }];
+    const list = unmatchedSchools(
+      [
+        r("a", "Lincoln High School", "2026-12-01T10:00:00Z"), // matches the host → not listed
+        r("b", "Roosevelt HS", "2026-12-01T11:00:00Z"),
+        r("c", "roosevelt", "2026-12-01T12:00:00Z"),
+        r("d", "Rooseveldt", "2026-12-01T13:00:00Z"),
+        r("e", "Anywhere", "2026-12-01T14:00:00Z", "box", "host-1"), // came through a link → not listed
+      ],
+      hosts,
+    );
+    expect(list).toEqual([
+      { key: "rooseveldt", names: [{ school: "Rooseveldt", count: 1 }], total: 1 },
+      { key: "roosevelt", names: [{ school: "Roosevelt HS", count: 1 }, { school: "roosevelt", count: 1 }], total: 2 },
+    ]);
   });
 });

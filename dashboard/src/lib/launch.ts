@@ -176,3 +176,24 @@ export function parseReservation(
   if (Object.keys(errors).length) return { ok: false, errors };
   return { ok: true, data: { name, instagram: instagram!, email, school, delivery: delivery! } };
 }
+
+/**
+ * A loose key for matching typed school names: lowercase, punctuation dropped,
+ * "high school" / "hs" (and a trailing "high") removed, spaces collapsed.
+ * "Lincoln High School", "Lincoln H.S.", "lincoln high" and "Lincoln" → "lincoln".
+ * Used to count reservations made without a host link toward a host's school.
+ */
+export function schoolKey(raw: string): string {
+  const words = raw
+    .toLowerCase()
+    .replace(/['’.]/g, "") // H.S. → hs, St. Mary's → st marys
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+  const key = words
+    .replace(/\bhigh school\b/g, " ")
+    .replace(/\bhs\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/ high$/, "");
+  return key || words; // "High School" alone stays as itself
+}

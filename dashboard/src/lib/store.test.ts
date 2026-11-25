@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cartPermalink, deliveryOptions, parseQuantity, readStoreConfig } from "./store";
+import { cartPermalink, deliveryOptions, parseQuantity, priceLines, priceText, readStoreConfig } from "./store";
 import { parseHostCode } from "./variants";
 
 const ENV = { STORE_OPEN: "true", SHOPIFY_VARIANT_SCHOOL_BOX: "111", SHOPIFY_VARIANT_SHIP_TO_ME: "222" };
@@ -41,5 +41,10 @@ describe("store", () => {
     expect(parseHostCode("bad code!")).toBeNull();
     expect(parseHostCode(["LINCOLN-7KX"])).toBeNull();
     expect(parseHostCode(undefined)).toBeNull();
+  });
+
+  it("prices: School box $15 with the $4 saving, Ship to me $19", () => {
+    expect(priceLines()).toEqual({ box: "$15 · save $4 by ordering through your school", alone: "$19" });
+    expect(priceText(1950)).toBe("$19.50");
   });
 });

@@ -33,7 +33,7 @@ export async function loadAdminData(): Promise<AdminData> {
     db.from("inventory").select("units_made").eq("id", 1).maybeSingle(),
     db
       .from("reservations")
-      .select("id, name, instagram, email, school, delivery, host_code, created_at")
+      .select("id, name, instagram, email, school, delivery, host_code, host_id, created_at")
       .order("created_at", { ascending: false }),
     db.from("waitlist").select("email, created_at").order("created_at", { ascending: false }),
   ]);

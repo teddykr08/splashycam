@@ -4,6 +4,7 @@
  * is scoped to that host's id, so a host only ever sees their own rows.
  */
 import { buildHostDashboard, type HostDashboard } from "./host-dashboard";
+import { schoolKey } from "./launch";
 import type { HostForLink } from "./store";
 import { createAdminClient, type Db } from "./supabase/admin";
 import { parseHostCode } from "./variants";
@@ -44,18 +45,20 @@ export async function findHostByCode(raw: unknown): Promise<(HostForLink & { id:
   return data;
 }
 
-/** "%", "_" and "\" are wildcards/escapes in ILIKE; match them literally. */
-export const likeLiteral = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
-
 /**
- * Reservations at the host's school: same school name (case-insensitive), or,
- * if the host has no school on file, the ones made through their link.
+ * Reservations for this host: every one made through their link (host_id), plus
+ * ones made without any host link whose school matches theirs (schoolKey).
  */
 export async function countSchoolReservations(db: Db, host: Pick<DashboardHost, "id" | "school">): Promise<number> {
-  const query = db.from("reservations").select("id", { count: "exact", head: true });
-  const { count, error } = host.school ? await query.ilike("school", likeLiteral(host.school)) : await query.eq("host_id", host.id);
-  if (error) throw error;
-  return count ?? 0;
+  const [linked, unlinked] = await Promise.all([
+    db.from("reservations").select("id", { count: "exact", head: true }).eq("host_id", host.id),
+    host.school ? db.from("reservations").select("school").is("host_id", null) : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (linked.error) throw linked.error;
+  if (unlinked.error) throw unlinked.error;
+  const key = host.school ? schoolKey(host.school) : null;
+  const matched = key ? (unlinked.data ?? []).filter((r) => schoolKey(r.school) === key).length : 0;
+  return (linked.count ?? 0) + matched;
 }
 
 export async function loadHostDashboard(

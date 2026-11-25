@@ -23,6 +23,7 @@ import {
   owedByHost,
   reservationsBySchool,
   schoolOptions,
+  unmatchedSchools,
 } from "@/lib/admin-view";
 import { dollars } from "@/lib/host-dashboard";
 import { SHOP_TIME_ZONE, type Delivery } from "@/lib/rules";
@@ -76,6 +77,7 @@ async function Admin({ searchParams }: { searchParams: PageProps<"/admin">["sear
   const schools = schoolOptions(data.hosts);
   const hostInstagrams = new Set(data.hosts.map((h) => h.instagram?.toLowerCase()).filter(Boolean));
   const reservedBySchool = reservationsBySchool(data.reservations);
+  const unmatched = unmatchedSchools(data.reservations, data.hosts);
   const flaggedCount = ordersForAdmin(data.hosts, data.boxes, data.orders, now).filter((v) => v.flags.length).length;
 
   return (
@@ -202,6 +204,27 @@ async function Admin({ searchParams }: { searchParams: PageProps<"/admin">["sear
             </div>
           </details>
         ))}
+
+        <h3>Schools with no host ({unmatched.length})</h3>
+        <p className="sc-hint">Typed in without a host link and matching no host&apos;s school. Similar names sit together.</p>
+        {unmatched.length === 0 ? (
+          <p className="sc-hint">None.</p>
+        ) : (
+          <ul className="sc-admin__emails">
+            {unmatched.map((u) => (
+              <li key={u.key}>
+                <strong>{u.total}</strong> ·{" "}
+                {u.names.map((n, i) => (
+                  <span key={n.school}>
+                    {i > 0 && " / "}
+                    {n.school}
+                    {u.names.length > 1 && <span className="sc-admin__small"> ({n.count})</span>}
+                  </span>
+                ))}
+              </li>
+            ))}
+          </ul>
+        )}
 
         <h3>Old waitlist emails ({data.waitlist.length})</h3>
         {data.waitlist.length === 0 ? (

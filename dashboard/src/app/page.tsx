@@ -3,13 +3,13 @@ import { Suspense } from "react";
 import { Clip, Footer, Logo } from "./_components/Site";
 import { BuyForm, ReserveForm, type Visit } from "./_components/OrderForms";
 import { findHostByCode } from "@/lib/host-data";
-import { deliveryOptions, readStoreConfig } from "@/lib/store";
+import { deliveryOptions, priceLines, readStoreConfig } from "@/lib/store";
 
 const POINTS = ["clips onto your water gun in seconds", "both hands free, phone stays steady", "proof nobody can argue with"];
 
 // "/" is the whole store: one product, one buy flow. Affiliates have their own page at /hosts.
 // Until STORE_OPEN is on, the buy flow is hidden and a free reservation form shows instead.
-// Keep prices, cuts and payouts off this page until launch.
+// Prices show only inside the buy flow (store open). Cuts and payouts never show here.
 export default function ProductPage({ searchParams }: PageProps<"/">) {
   return (
     <>
@@ -60,7 +60,7 @@ async function GetYours({ searchParams }: { searchParams: PageProps<"/">["search
     return (
       <>
         <h2 className="sc-when">Get yours.</h2>
-        <BuyForm visit={visit} />
+        <BuyForm visit={visit} prices={priceLines()} />
       </>
     );
   }

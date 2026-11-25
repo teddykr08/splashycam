@@ -10,6 +10,7 @@ import {
   isBot,
   parseHostApplication,
   parseReservation,
+  schoolKey,
   type FieldErrors,
   type HostField,
   type ReservationField,
@@ -70,7 +71,16 @@ export async function reserve(_prev: ReserveState, fd: FormData): Promise<Reserv
     const parsed = parseReservation(fd, { hostSchool: host?.school ?? null, options: deliveryOptions(host) });
     if (!parsed.ok) return { status: "error", message: "Check the highlighted fields.", errors: parsed.errors, values };
 
-    const { error } = await createAdminClient()
+    const db = createAdminClient();
+    // One per Instagram handle per school, with the school matched loosely
+    // ("Lincoln HS" = "Lincoln High School"). The unique index backs up exact repeats.
+    // "_" is a wildcard in ILIKE and allowed in handles, so escape it.
+    const same = await db.from("reservations").select("school").ilike("instagram", parsed.data.instagram.replace(/_/g, "\\_"));
+    if (same.error) throw same.error;
+    const key = schoolKey(parsed.data.school);
+    if ((same.data ?? []).some((r) => schoolKey(r.school) === key)) return { status: "done", already: true };
+
+    const { error } = await db
       .from("reservations")
       .insert({ ...parsed.data, host_id: host?.id ?? null, host_code: host?.code ?? null });
     // Same Instagram handle at the same school: they're already reserved.

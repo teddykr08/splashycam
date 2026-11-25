@@ -4,6 +4,7 @@ import {
   DATE_MESSAGES,
   isBot,
   normalizeSchool,
+  schoolKey,
   parseDate,
   parseEmail,
   parseHostApplication,
@@ -186,5 +187,23 @@ describe("reservation", () => {
 
   it("normalizeSchool collapses spaces", () => {
     expect(normalizeSchool("  a 	 b  ")).toBe("a b");
+  });
+});
+
+describe("schoolKey", () => {
+  it("matches the usual ways of writing the same school", () => {
+    for (const s of ["Lincoln High School", "lincoln high school", "Lincoln H.S.", "Lincoln HS", "LINCOLN high", "Lincoln", " lincoln  hs! "]) {
+      expect(schoolKey(s)).toBe("lincoln");
+    }
+  });
+
+  it("keeps the rest of the name", () => {
+    expect(schoolKey("St. Mary's Academy")).toBe("st marys academy");
+    expect(schoolKey("High Point High School")).toBe("high point");
+    expect(schoolKey("Torrey Pines")).not.toBe(schoolKey("Torrey Highlands"));
+  });
+
+  it("never empty", () => {
+    expect(schoolKey("High School")).toBe("high school");
   });
 });

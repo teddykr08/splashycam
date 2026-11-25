@@ -24,11 +24,24 @@ const HINTS: Record<Delivery, string> = { box: "pick it up at school", alone: "m
  * School box / Ship to me. With one option there's nothing to pick, so it just
  * says how it gets to them.
  */
-function DeliveryChoice({ options, picked, error }: { options: Delivery[]; picked?: string; error?: string }) {
+function DeliveryChoice({
+  options,
+  picked,
+  error,
+  prices,
+}: {
+  options: Delivery[];
+  picked?: string;
+  error?: string;
+  /** Only passed once the store is open. */
+  prices?: Record<Delivery, string>;
+}) {
   if (options.length === 1) {
+    const only = options[0];
     return (
       <p className="sc-hint sc-delivery__only">
-        {`${VARIANT_TITLES[options[0]]}: ${HINTS[options[0]]}.`}
+        {`${VARIANT_TITLES[only]}: ${HINTS[only]}.`}
+        {prices && <strong className="sc-delivery__price">{prices[only]}</strong>}
       </p>
     );
   }
@@ -42,6 +55,7 @@ function DeliveryChoice({ options, picked, error }: { options: Delivery[]; picke
             <span>
               <strong>{VARIANT_TITLES[d]}</strong>
               <small>{HINTS[d]}</small>
+              {prices && <span className="sc-delivery__price">{prices[d]}</span>}
             </span>
           </label>
         ))}
@@ -112,13 +126,13 @@ export function ReserveForm({ visit }: { visit: Visit }) {
 const checkoutInitial: CheckoutState = { status: "idle" };
 
 /** The buy flow (only when STORE_OPEN): delivery + quantity → Shopify checkout. */
-export function BuyForm({ visit }: { visit: Visit }) {
+export function BuyForm({ visit, prices }: { visit: Visit; prices: Record<Delivery, string> }) {
   const [state, action, pending] = useActionState(startCheckout, checkoutInitial);
 
   return (
     <form action={action} className="sc-card sc-order-form">
       {visit.hostCode && <input type="hidden" name="host" value={visit.hostCode} />}
-      <DeliveryChoice options={visit.options} />
+      <DeliveryChoice options={visit.options} prices={prices} />
       <Field id="quantity" label="How many?" small>
         <input id="quantity" name="quantity" className="sc-field sc-field--qty" type="number" inputMode="numeric" min={1} max={MAX_QUANTITY} defaultValue={1} required />
       </Field>
